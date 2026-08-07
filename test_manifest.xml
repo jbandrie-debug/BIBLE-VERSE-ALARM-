@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.test">
+    <attribution android:tag="default_tag" android:label="Empty Tag" />
+    <application android:attributionTags="default_tag">
+    </application>
+</manifest>

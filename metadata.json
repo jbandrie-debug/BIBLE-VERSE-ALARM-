@@ -1,0 +1,6 @@
+{
+  "name": "Bible Verse Alarm",
+  "description": "A modern Android application that plays inspirational Bible verses aloud using Text-To-Speech when alarms trigger.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
