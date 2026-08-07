@@ -18,8 +18,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Fix and Regenerate Gradle Wrapper
+        run: |
+          rm -rf gradle/wrapper/gradle-wrapper.jar
+          gradle wrapper --gradle-version 8.5
+          chmod +x ./gradlew
 
       - name: Build APK Debug
         run: ./gradlew assembleDebug
+        
