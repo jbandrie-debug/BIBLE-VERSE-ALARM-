@@ -21,7 +21,7 @@ jobs:
       - name: Fix and Regenerate Gradle Wrapper
         run: |
           rm -rf gradle/wrapper/gradle-wrapper.jar
-          gradle wrapper --gradle-version 8.5
+          gradle wrapper --gradle-version 9.3.1
           chmod +x ./gradlew
 
       - name: Build APK Debug
