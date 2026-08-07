@@ -18,12 +18,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Fix and Regenerate Gradle Wrapper
+      - name: Fix and Configure Gradle 9.3.1
         run: |
-          rm -rf gradle/wrapper/gradle-wrapper.jar
+          # I-update ang distributionUrl sa gradle-wrapper.properties ngadto sa version 9.3.1
+          echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
+          echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+          echo "distributionUrl=https\://services.gradle.org/distributions/gradle-9.3.1-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
+          echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
+          echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+          
+          # I-regenerate ang wrapper ug i-set ang executable permission
           gradle wrapper --gradle-version 9.3.1
           chmod +x ./gradlew
 
       - name: Build APK Debug
         run: ./gradlew assembleDebug
-        
