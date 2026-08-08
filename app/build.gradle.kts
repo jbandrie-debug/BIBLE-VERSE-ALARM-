@@ -5,7 +5,6 @@ plugins {
     id("com.google.gms.google-services")
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
-
 android {
     namespace = "com.kirkatic.bibleversealarm"
     compileSdk = 34
@@ -21,7 +20,6 @@ android {
     }
 
     signingConfigs {
-        // Ang iyong signing configs dito kung mayroon man
     }
 
     buildTypes {
