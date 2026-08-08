@@ -25,7 +25,7 @@ jobs:
       - name: Create google-services.json
         run: |
           mkdir -p app
-          cat << 'EOF' > app/google-services.json
+          cat << 'GSEOF' > app/google-services.json
           {
             "project_info": {
               "project_number": "123456789012",
@@ -65,11 +65,22 @@ jobs:
                 "oauth_client": [],
                 "api_key": [{ "current_key": "AIzaSyDummyKeyForGoogleServicesJson" }],
                 "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+              },
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:123456789012:android:abcdef1234567893",
+                  "android_client_info": {
+                    "package_name": "com.example.bibleversealarm"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [{ "current_key": "AIzaSyDummyKeyForGoogleServicesJson" }],
+                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
               }
             ],
             "configuration_version": "1"
           }
-          EOF
+          GSEOF
           cp app/google-services.json google-services.json || true
 
       - name: Make gradlew executable

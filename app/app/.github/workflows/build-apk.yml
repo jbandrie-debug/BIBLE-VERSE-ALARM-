@@ -22,7 +22,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Create or Update google-services.json
+      - name: Create google-services.json
         run: |
           mkdir -p app
           cat << 'EOF' > app/google-services.json
