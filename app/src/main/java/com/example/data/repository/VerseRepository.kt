@@ -25,6 +25,9 @@ class VerseRepository(
     fun getVersesByCategory(category: String): Flow<List<VerseEntity>> =
         verseDao.getVersesByCategory(category)
 
+    fun getVersesByCategoryAndTranslation(category: String, translation: String): Flow<List<VerseEntity>> =
+        verseDao.getVersesByCategoryAndTranslation(category, translation)
+
     fun searchVerses(query: String): Flow<List<VerseEntity>> = verseDao.searchVerses(query)
 
     suspend fun getRandomVerse(): VerseEntity? = verseDao.getRandomVerse()

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -41,13 +42,18 @@ class VerseViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val verses: StateFlow<List<VerseEntity>> = _searchQuery.flatMapLatest { query ->
+    val verses: StateFlow<List<VerseEntity>> = combine(
+        _searchQuery,
+        _selectedCategory,
+        _selectedTranslation
+    ) { query, category, translation ->
+        Triple(query, category, translation)
+    }.flatMapLatest { (query, category, translation) ->
         if (query.isNotBlank()) {
             repository.searchVerses(query)
         } else {
-            val category = _selectedCategory.value
-            val translation = _selectedTranslation.value
             when {
+                category != null && translation != null -> repository.getVersesByCategoryAndTranslation(category, translation)
                 category != null -> repository.getVersesByCategory(category)
                 translation != null -> repository.getVersesByTranslation(translation)
                 else -> repository.allVerses

@@ -21,6 +21,9 @@ interface VerseDao {
     @Query("SELECT * FROM verses WHERE category = :category ORDER BY book ASC, chapter ASC, verseNumber ASC")
     fun getVersesByCategory(category: String): Flow<List<VerseEntity>>
 
+    @Query("SELECT * FROM verses WHERE category = :category AND translation = :translation ORDER BY book ASC, chapter ASC, verseNumber ASC")
+    fun getVersesByCategoryAndTranslation(category: String, translation: String): Flow<List<VerseEntity>>
+
     @Query("SELECT * FROM verses WHERE text LIKE '%' || :query || '%' OR book LIKE '%' || :query || '%' ORDER BY book ASC")
     fun searchVerses(query: String): Flow<List<VerseEntity>>
 

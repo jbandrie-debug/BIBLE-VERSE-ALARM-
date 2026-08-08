@@ -78,6 +78,20 @@ abstract class AppDatabase : RoomDatabase() {
                                 }
                             }
                         }
+
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                try {
+                                    val database = getInstance(context)
+                                    if (database.verseDao().getVerseCount() == 0) {
+                                        database.verseDao().insertVerses(InitialBibleVerses.verses)
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("AppDatabase", "Error seeding verses onOpen", e)
+                                }
+                            }
+                        }
                     })
                     .build()
                     INSTANCE = instance
