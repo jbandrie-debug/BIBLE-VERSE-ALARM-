@@ -20,12 +20,14 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Create google-services.json
         run: |
           mkdir -p app
-          cat << 'EOF' > app/google-services.json
+          cat << 'GSEOF' > app/google-services.json
           {
             "project_info": {
               "project_number": "123456789012",
@@ -65,18 +67,29 @@ jobs:
                 "oauth_client": [],
                 "api_key": [{ "current_key": "AIzaSyDummyKeyForGoogleServicesJson" }],
                 "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+              },
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:123456789012:android:abcdef1234567893",
+                  "android_client_info": {
+                    "package_name": "com.example.bibleversealarm"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [{ "current_key": "AIzaSyDummyKeyForGoogleServicesJson" }],
+                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
               }
             ],
             "configuration_version": "1"
           }
-          EOF
+          GSEOF
           cp app/google-services.json google-services.json || true
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-
-      - name: Build Debug APK with Gradle Wrapper
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Build Debug APK
+        run: |
+          gradle wrapper --gradle-version 8.7 || true
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace || gradle assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
