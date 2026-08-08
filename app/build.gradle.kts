@@ -1,12 +1,9 @@
-import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
-
-plugins {
-  alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.compose)
-  alias(libs.plugins.google.devtools.ksp)
-  alias(libs.plugins.roborazzi)
-  alias(libs.plugins.secrets)
-  alias(libs.plugins.google.services)
+plugins {    
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android) // Siguraduhing kotlin.android ang tawag dito kung ito ang nasa toml
+    alias(libs.plugins.devtools.ksp)
+    alias(libs.plugins.secrets)
+    alias(libs.plugins.google.services)
 }
 
 android {
