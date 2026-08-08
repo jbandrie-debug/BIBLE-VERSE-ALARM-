@@ -1,6 +1,7 @@
 package com.example.data.database
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -10,7 +11,6 @@ import com.example.data.dao.AlarmDao
 import com.example.data.dao.FavoriteDao
 import com.example.data.dao.UserSettingsDao
 import com.example.data.dao.VerseDao
-import com.example.data.entity.Alarm
 import com.example.data.entity.AlarmEntity
 import com.example.data.entity.FavoriteVerseEntity
 import com.example.data.entity.UserSettingsEntity
@@ -25,14 +25,14 @@ import kotlinx.coroutines.launch
 @Database(
     entities = [
         AlarmEntity::class,
-        Alarm::class,
         VerseEntity::class,
         FavoriteVerseEntity::class,
         UserSettingsEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun alarmDao(): AlarmDao
@@ -46,43 +46,45 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                lateinit var databaseInstance: AppDatabase
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "bible_verse_alarm_db"
-                )
-                .fallbackToDestructiveMigration(dropAllTables = true)
-                .addCallback(object : RoomDatabase.Callback() {
-                    override fun onCreate(db: SupportSQLiteDatabase) {
-                        super.onCreate(db)
-                        // Seed database on creation
-                        CoroutineScope(Dispatchers.IO).launch {
-                            try {
-                                databaseInstance.verseDao().insertVerses(InitialBibleVerses.verses)
-                                databaseInstance.userSettingsDao().saveUserSettings(UserSettingsEntity())
-                                databaseInstance.alarmDao().insertAlarm(
-                                    AlarmEntity(
-                                        timeHour = 7,
-                                        timeMinute = 0,
-                                        label = "Morning Inspiration",
-                                        isEnabled = true,
-                                        repeatDaysBitmask = 62, // Mon - Fri (2+4+8+16+32)
-                                        soundMode = SoundMode.VERSE_THEN_ALARM,
-                                        verseSelectionType = VerseSelectionType.DAILY_VERSE
+                var instance = INSTANCE
+                if (instance == null) {
+                    instance = Room.databaseBuilder(
+                        context.applicationContext,
+                        AppDatabase::class.java,
+                        "bible_verse_alarm_db"
+                    )
+                    .fallbackToDestructiveMigration()
+                    .addCallback(object : RoomDatabase.Callback() {
+                        override fun onCreate(db: SupportSQLiteDatabase) {
+                            super.onCreate(db)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                try {
+                                    val database = getInstance(context)
+                                    database.verseDao().insertVerses(InitialBibleVerses.verses)
+                                    database.userSettingsDao().saveUserSettings(UserSettingsEntity())
+                                    database.alarmDao().insertAlarm(
+                                        AlarmEntity(
+                                            timeHour = 7,
+                                            timeMinute = 0,
+                                            label = "Morning Inspiration",
+                                            isEnabled = true,
+                                            repeatDaysBitmask = 62, // Mon - Fri
+                                            soundMode = SoundMode.VERSE_THEN_ALARM,
+                                            verseSelectionType = VerseSelectionType.DAILY_VERSE
+                                        )
                                     )
-                                )
-                            } catch (e: Exception) {
-                                e.printStackTrace()
+                                } catch (e: Exception) {
+                                    Log.e("AppDatabase", "Error seeding database", e)
+                                }
                             }
                         }
-                    }
-                })
-                .build()
-                databaseInstance = instance
-                INSTANCE = instance
+                    })
+                    .build()
+                    INSTANCE = instance
+                }
                 instance
             }
         }
     }
 }
+

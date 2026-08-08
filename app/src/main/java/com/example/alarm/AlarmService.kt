@@ -53,6 +53,8 @@ class AlarmService : Service() {
         val action = intent?.action
         val alarmId = intent?.getLongExtra(AlarmReceiver.EXTRA_ALARM_ID, -1L) ?: -1L
 
+        startInitialForegroundNotification()
+
         when (action) {
             ACTION_STOP -> {
                 stopAlarmAndSelf()
@@ -82,6 +84,18 @@ class AlarmService : Service() {
         }
 
         return START_STICKY
+    }
+
+    private fun startInitialForegroundNotification() {
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle("Bible Verse Alarm")
+            .setContentText("Alarm is ringing...")
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setOngoing(true)
+            .build()
+        startForeground(NOTIFICATION_ID, notification)
     }
 
     private suspend fun resolveVerseForAlarm(db: AppDatabase, alarm: AlarmEntity): VerseEntity {
