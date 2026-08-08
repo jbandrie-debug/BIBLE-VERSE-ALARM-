@@ -1,7 +1,5 @@
 name: Build APK
-name: Create local.properties
-  run: 
-    echo "sdk.dir=$ANDROID_HOME" > local.properties    
+
 on:
   push:
     branches: [ "main" ]
@@ -33,4 +31,7 @@ jobs:
 
     - name: Build APK Debug
       run: ./gradlew assembleDebug --no-daemon
-      
+    - name: Create local.properties
+      run: |
+       echo "sdk.dir=$ANDROID_HOME" > local.properties
+    
