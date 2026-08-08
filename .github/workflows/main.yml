@@ -1,6 +1,6 @@
 name: Build APK
-- name: Create local.properties
-  run: |
+name: Create local.properties
+  run: 
     echo "sdk.dir=$ANDROID_HOME" > local.properties    
 on:
   push:
