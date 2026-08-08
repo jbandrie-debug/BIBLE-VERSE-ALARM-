@@ -51,15 +51,19 @@ class AlarmReceiver : BroadcastReceiver() {
 
             Intent.ACTION_BOOT_COMPLETED -> {
                 Log.d("AlarmReceiver", "Re-scheduling alarms after reboot...")
+                val pendingResult = goAsync()
                 CoroutineScope(Dispatchers.IO).launch {
-                    val db = AppDatabase.getInstance(context)
-                    val scheduler = AlarmScheduler(context)
-                    val alarms = db.alarmDao().getAlarmById(1) // Or collect list
-                    // Read all enabled alarms
-                    db.alarmDao().getEnabledAlarms().collect { alarmList ->
-                        alarmList.forEach { alarm ->
+                    try {
+                        val db = AppDatabase.getInstance(context)
+                        val scheduler = AlarmScheduler(context)
+                        val enabledAlarms = db.alarmDao().getEnabledAlarmsList()
+                        enabledAlarms.forEach { alarm ->
                             scheduler.scheduleAlarm(alarm)
                         }
+                    } catch (e: Exception) {
+                        Log.e("AlarmReceiver", "Error re-scheduling alarms after reboot", e)
+                    } finally {
+                        pendingResult.finish()
                     }
                 }
             }

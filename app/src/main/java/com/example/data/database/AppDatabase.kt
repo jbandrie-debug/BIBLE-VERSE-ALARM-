@@ -46,6 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
+                lateinit var databaseInstance: AppDatabase
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
@@ -56,16 +57,11 @@ abstract class AppDatabase : RoomDatabase() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
                         // Seed database on creation
-                        INSTANCE?.let { database ->
-                            CoroutineScope(Dispatchers.IO).launch {
-                                // Pre-populate Verses
-                                database.verseDao().insertVerses(InitialBibleVerses.verses)
-
-                                // Pre-populate Default Settings
-                                database.userSettingsDao().saveUserSettings(UserSettingsEntity())
-
-                                // Pre-populate Default Sample Alarm (7:00 AM)
-                                database.alarmDao().insertAlarm(
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                databaseInstance.verseDao().insertVerses(InitialBibleVerses.verses)
+                                databaseInstance.userSettingsDao().saveUserSettings(UserSettingsEntity())
+                                databaseInstance.alarmDao().insertAlarm(
                                     AlarmEntity(
                                         timeHour = 7,
                                         timeMinute = 0,
@@ -76,11 +72,14 @@ abstract class AppDatabase : RoomDatabase() {
                                         verseSelectionType = VerseSelectionType.DAILY_VERSE
                                     )
                                 )
+                            } catch (e: Exception) {
+                                e.printStackTrace()
                             }
                         }
                     }
                 })
                 .build()
+                databaseInstance = instance
                 INSTANCE = instance
                 instance
             }

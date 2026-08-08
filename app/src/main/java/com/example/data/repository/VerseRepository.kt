@@ -34,12 +34,18 @@ class VerseRepository(
 
     suspend fun getDailyVerse(translation: String = "KJV"): VerseEntity? {
         val total = verseDao.getVerseCount()
-        if (total == 0) return null
+        if (total == 0) return defaultFallbackVerse()
         val calendar = Calendar.getInstance()
         val dayOfYear = calendar.get(Calendar.DAY_OF_YEAR)
         val verseId = (dayOfYear % total + 1).toLong()
-        return verseDao.getVerseById(verseId) ?: verseDao.getRandomVerse()
+        return verseDao.getVerseById(verseId) ?: verseDao.getRandomVerse() ?: defaultFallbackVerse()
     }
+
+    fun defaultFallbackVerse() = VerseEntity(
+        book = "Psalms", chapter = 118, verseNumber = 24,
+        text = "This is the day which the LORD hath made; we will rejoice and be glad in it.",
+        translation = "KJV", category = "Morning"
+    )
 
     fun isFavorite(verseId: Long): Flow<Boolean> = favoriteDao.isFavorite(verseId)
 
