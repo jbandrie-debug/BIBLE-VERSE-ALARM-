@@ -35,7 +35,14 @@ class VerseRepository(
     suspend fun getRandomVerseByTranslation(translation: String): VerseEntity? =
         verseDao.getRandomVerseByTranslation(translation)
 
+    suspend fun ensureVersesLoaded() {
+        if (verseDao.getVerseCount() < com.example.util.InitialBibleVerses.verses.size) {
+            verseDao.insertVerses(com.example.util.InitialBibleVerses.verses)
+        }
+    }
+
     suspend fun getDailyVerse(translation: String = "KJV"): VerseEntity? {
+        ensureVersesLoaded()
         val total = verseDao.getVerseCount()
         if (total == 0) return defaultFallbackVerse()
         val calendar = Calendar.getInstance()

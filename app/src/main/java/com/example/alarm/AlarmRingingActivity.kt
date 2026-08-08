@@ -236,13 +236,17 @@ class AlarmRingingActivity : ComponentActivity() {
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
-            androidx.compose.foundation.Image(
-                painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.prayer_bg),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                alpha = 0.30f
-            )
+            val bgPainter = com.example.util.rememberSafePainterResource(id = com.example.R.drawable.prayer_bg)
+
+            if (bgPainter != null) {
+                androidx.compose.foundation.Image(
+                    painter = bgPainter,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    alpha = 0.30f
+                )
+            }
 
             Column(
                 modifier = Modifier

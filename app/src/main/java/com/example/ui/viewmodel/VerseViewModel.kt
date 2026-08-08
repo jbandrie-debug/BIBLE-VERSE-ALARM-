@@ -67,7 +67,10 @@ class VerseViewModel(
     private var previewTts: TtsManager? = null
 
     init {
-        loadDailyVerse()
+        viewModelScope.launch {
+            repository.ensureVersesLoaded()
+            loadDailyVerse()
+        }
     }
 
     fun loadDailyVerse() {

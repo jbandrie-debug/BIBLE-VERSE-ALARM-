@@ -59,36 +59,23 @@ abstract class AppDatabase : RoomDatabase() {
                             super.onCreate(db)
                             CoroutineScope(Dispatchers.IO).launch {
                                 try {
-                                    val database = getInstance(context)
-                                    database.verseDao().insertVerses(InitialBibleVerses.verses)
-                                    database.userSettingsDao().saveUserSettings(UserSettingsEntity())
-                                    database.alarmDao().insertAlarm(
-                                        AlarmEntity(
-                                            timeHour = 7,
-                                            timeMinute = 0,
-                                            label = "Morning Inspiration",
-                                            isEnabled = true,
-                                            repeatDaysBitmask = 62, // Mon - Fri
-                                            soundMode = SoundMode.VERSE_THEN_ALARM,
-                                            verseSelectionType = VerseSelectionType.DAILY_VERSE
-                                        )
-                                    )
-                                } catch (e: Exception) {
-                                    Log.e("AppDatabase", "Error seeding database", e)
-                                }
-                            }
-                        }
-
-                        override fun onOpen(db: SupportSQLiteDatabase) {
-                            super.onOpen(db)
-                            CoroutineScope(Dispatchers.IO).launch {
-                                try {
-                                    val database = getInstance(context)
-                                    if (database.verseDao().getVerseCount() == 0) {
+                                    INSTANCE?.let { database ->
                                         database.verseDao().insertVerses(InitialBibleVerses.verses)
+                                        database.userSettingsDao().saveUserSettings(UserSettingsEntity())
+                                        database.alarmDao().insertAlarm(
+                                            AlarmEntity(
+                                                timeHour = 7,
+                                                timeMinute = 0,
+                                                label = "Morning Inspiration",
+                                                isEnabled = true,
+                                                repeatDaysBitmask = 62, // Mon - Fri
+                                                soundMode = SoundMode.VERSE_THEN_ALARM,
+                                                verseSelectionType = VerseSelectionType.DAILY_VERSE
+                                            )
+                                        )
                                     }
                                 } catch (e: Exception) {
-                                    Log.e("AppDatabase", "Error seeding verses onOpen", e)
+                                    Log.e("AppDatabase", "Error seeding database on create", e)
                                 }
                             }
                         }

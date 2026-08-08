@@ -94,14 +94,18 @@ fun MainNavGraph(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
-            // Background image layer (30% visible)
-            Image(
-                painter = painterResource(id = R.drawable.prayer_bg),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-                alpha = 0.30f
-            )
+            // Background image layer (30% visible with safe fallback)
+            val bgPainter = com.example.util.rememberSafePainterResource(id = R.drawable.prayer_bg)
+
+            if (bgPainter != null) {
+                Image(
+                    painter = bgPainter,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.30f
+                )
+            }
 
             NavHost(
                 navController = navController,

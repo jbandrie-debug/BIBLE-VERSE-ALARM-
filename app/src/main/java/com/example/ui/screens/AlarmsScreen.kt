@@ -76,14 +76,25 @@ fun AlarmsScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.app_logo),
-                            contentDescription = "App Logo",
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
-                        )
+                        val logoPainter = com.example.util.rememberSafePainterResource(id = R.drawable.app_logo)
+
+                        if (logoPainter != null) {
+                            Image(
+                                painter = logoPainter,
+                                contentDescription = "App Logo",
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Alarm,
+                                contentDescription = "App Logo",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Bible Verse Alarms",
