@@ -1,24 +1,25 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") 
-    id("com.google.gms.google-services") 
-    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin") 
+    id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
+
 android {
-  namespace = "com.example"
-  compileSdk { version = release(36) { minorApiLevel = 1 } }
+    namespace = "com.kirkatic.bibleversealarm" // Panatilihin ang iyong kasalukuyang namespace
+    compileSdk = 34 // O ang iyong kasalukuyang compileSdk version
 
-  defaultConfig {
-    applicationId = "com.aistudio.bibleversealarm.qkxpr"
-    minSdk = 24
-    targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    defaultConfig {
+        applicationId = "com.kirkatic.bibleversealarm"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
 
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+}
   signingConfigs {
     create("release") {
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
