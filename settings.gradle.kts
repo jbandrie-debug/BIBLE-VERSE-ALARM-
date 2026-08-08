@@ -8,15 +8,8 @@ pluginManagement {
             }
         }
         mavenCentral()
-        gradlePluginPortal() // Kailangan para ma-download ang KSP plugin
+        gradlePluginPortal()
     }
-}
-
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-    
-    // Tiyaking ang KSP version ay tugma sa iyong Kotlin version
-    id("com.google.devtools.ksp") version "2.2.10-1.0.30" apply false
 }
 
 dependencyResolutionManagement {
