@@ -1,11 +1,10 @@
-plugins {    
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android) // Siguraduhing kotlin.android ang tawag dito kung ito ang nasa toml
-    alias(libs.plugins.devtools.ksp)
-    alias(libs.plugins.secrets)
-    alias(libs.plugins.google.services)
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
-
 android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
