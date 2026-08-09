@@ -144,6 +144,7 @@ class AlarmService : Service() {
             putExtra(AlarmReceiver.EXTRA_VERSE_NUMBER, verse.verseNumber)
             putExtra(AlarmReceiver.EXTRA_VERSE_TEXT, verse.text)
             putExtra(AlarmReceiver.EXTRA_VERSE_TRANSLATION, verse.translation)
+            putExtra(AlarmReceiver.EXTRA_VERSE_PRAYER, verse.prayer)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
 
@@ -228,6 +229,7 @@ class AlarmService : Service() {
             putExtra(AlarmReceiver.EXTRA_VERSE_NUMBER, verse.verseNumber)
             putExtra(AlarmReceiver.EXTRA_VERSE_TEXT, verse.text)
             putExtra(AlarmReceiver.EXTRA_VERSE_TRANSLATION, verse.translation)
+            putExtra(AlarmReceiver.EXTRA_VERSE_PRAYER, verse.prayer)
             setPackage(packageName)
         }
         sendBroadcast(intent)
@@ -244,9 +246,10 @@ class AlarmService : Service() {
         }
 
         val greeting = DateTimeUtils.getTimeBasedGreeting(alarm.timeHour)
+        val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
         val verseTextToSpeak = "$greeting! Here is your Bible verse for today. " +
                 "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}. " +
-                "${verse.text}"
+                "${verse.text}$prayerPart"
 
         when (alarm.soundMode) {
             SoundMode.VERSE_THEN_ALARM -> {

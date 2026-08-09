@@ -98,5 +98,6 @@ class AlarmReceiver : BroadcastReceiver() {
         const val EXTRA_VERSE_NUMBER = "extra_verse_number"
         const val EXTRA_VERSE_TEXT = "extra_verse_text"
         const val EXTRA_VERSE_TRANSLATION = "extra_verse_translation"
+        const val EXTRA_VERSE_PRAYER = "extra_verse_prayer"
     }
 }

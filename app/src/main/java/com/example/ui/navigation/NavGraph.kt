@@ -58,7 +58,6 @@ fun MainNavGraph(
     val bottomBarScreens = listOf(
         Screen.Alarms,
         Screen.Verses,
-        Screen.GeminiAi,
         Screen.Favorites,
         Screen.Settings
     )
@@ -98,8 +97,8 @@ fun MainNavGraph(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
-            // Background image layer (30% visible with safe fallback)
-            val bgPainter = com.example.util.rememberSafePainterResource(id = R.drawable.prayer_bg)
+            // Background image layer (40% visible with safe fallback)
+            val bgPainter = com.example.util.rememberSafePainterResource(id = R.drawable.img_layout_bg_1786276575961)
 
             if (bgPainter != null) {
                 Image(
@@ -107,7 +106,7 @@ fun MainNavGraph(
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
-                    alpha = 0.30f
+                    alpha = 0.40f
                 )
             }
 

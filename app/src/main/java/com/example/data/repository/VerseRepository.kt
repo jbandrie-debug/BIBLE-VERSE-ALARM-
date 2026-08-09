@@ -59,7 +59,8 @@ class VerseRepository(
     fun defaultFallbackVerse() = VerseEntity(
         book = "Psalms", chapter = 118, verseNumber = 24,
         text = "This is the day which the LORD hath made; we will rejoice and be glad in it.",
-        translation = "KJV", category = "Morning"
+        translation = "KJV", category = "Morning",
+        prayer = "Ginoong Dios, salamat niining bag-ong adlaw nga Imong gihatag. Punoa ang among kasingkasing sa kalipay, grasya, ug paglaum karong adlawa. Amen."
     )
 
     fun isFavorite(verseId: Long): Flow<Boolean> = favoriteDao.isFavorite(verseId)

@@ -76,7 +76,7 @@ fun AlarmsScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        val logoPainter = com.example.util.rememberSafePainterResource(id = R.drawable.app_logo)
+                        val logoPainter = com.example.util.rememberSafePainterResource(id = R.drawable.img_app_icon_1786276559564)
 
                         if (logoPainter != null) {
                             Image(

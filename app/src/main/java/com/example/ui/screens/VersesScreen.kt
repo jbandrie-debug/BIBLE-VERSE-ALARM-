@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,11 +54,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.entity.VerseEntity
 import com.example.ui.viewmodel.VerseViewModel
 
@@ -82,7 +85,23 @@ fun VersesScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Bible Verse Catalog", fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val logoPainter = com.example.util.rememberSafePainterResource(id = R.drawable.img_app_icon_1786276559564)
+                        if (logoPainter != null) {
+                            Image(
+                                painter = logoPainter,
+                                contentDescription = "App Logo",
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                        }
+                        Text("Bible Verse Catalog", fontWeight = FontWeight.Bold)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
@@ -263,6 +282,41 @@ fun DailyVerseHeroCard(
                     style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                     color = Color(0xFFFBBF24)
                 )
+
+                if (verse.prayer.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White.copy(alpha = 0.15f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = "Prayer",
+                                    tint = Color(0xFFFBBF24),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Pag-ampo (Prayer)",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = Color(0xFFFBBF24)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = verse.prayer,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 15.sp,
+                                    lineHeight = 22.sp
+                                ),
+                                color = Color.White.copy(alpha = 0.95f)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -342,6 +396,38 @@ fun VerseCardItem(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
+
+            if (verse.prayer.isNotBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = "Prayer",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Pag-ampo (Prayer)",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = verse.prayer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -355,6 +441,7 @@ fun AddCustomVerseDialog(
     var chapter by remember { mutableStateOf("1") }
     var verseNum by remember { mutableStateOf("1") }
     var text by remember { mutableStateOf("") }
+    var prayer by remember { mutableStateOf("") }
     var translation by remember { mutableStateOf("KJV") }
     var category by remember { mutableStateOf("Custom") }
 
@@ -389,7 +476,13 @@ fun AddCustomVerseDialog(
                     value = text,
                     onValueChange = { text = it },
                     label = { Text("Verse Scripture Text") },
-                    maxLines = 4
+                    maxLines = 3
+                )
+                OutlinedTextField(
+                    value = prayer,
+                    onValueChange = { prayer = it },
+                    label = { Text("Pag-ampo / Prayer (Optional)") },
+                    maxLines = 3
                 )
             }
         },
@@ -404,7 +497,8 @@ fun AddCustomVerseDialog(
                                 verseNumber = verseNum.toIntOrNull() ?: 1,
                                 text = text.trim(),
                                 translation = translation,
-                                category = category
+                                category = category,
+                                prayer = prayer.trim()
                             )
                         )
                     }

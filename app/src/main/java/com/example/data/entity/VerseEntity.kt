@@ -17,6 +17,7 @@ data class VerseEntity(
     val verseNumber: Int,
     val text: String,
     val translation: String = "KJV",
-    val category: String = "Inspiration"
+    val category: String = "Inspiration",
+    val prayer: String = ""
 )
 

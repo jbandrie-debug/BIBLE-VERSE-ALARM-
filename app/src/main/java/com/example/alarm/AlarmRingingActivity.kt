@@ -35,6 +35,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AlarmOff
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Snooze
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.Button
@@ -172,6 +173,7 @@ class AlarmRingingActivity : ComponentActivity() {
             val chapter = intent.getIntExtra(AlarmReceiver.EXTRA_VERSE_CHAPTER, 1)
             val verseNum = intent.getIntExtra(AlarmReceiver.EXTRA_VERSE_NUMBER, 1)
             val translation = intent.getStringExtra(AlarmReceiver.EXTRA_VERSE_TRANSLATION) ?: "KJV"
+            val prayer = intent.getStringExtra(AlarmReceiver.EXTRA_VERSE_PRAYER) ?: ""
             val id = intent.getLongExtra(AlarmReceiver.EXTRA_VERSE_ID, 0L)
             currentVerseState.value = VerseEntity(
                 id = id,
@@ -179,7 +181,8 @@ class AlarmRingingActivity : ComponentActivity() {
                 chapter = chapter,
                 verseNumber = verseNum,
                 text = text,
-                translation = translation
+                translation = translation,
+                prayer = prayer
             )
         }
     }
@@ -236,7 +239,7 @@ class AlarmRingingActivity : ComponentActivity() {
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
-            val bgPainter = com.example.util.rememberSafePainterResource(id = com.example.R.drawable.prayer_bg)
+            val bgPainter = com.example.util.rememberSafePainterResource(id = com.example.R.drawable.img_layout_bg_1786276575961)
 
             if (bgPainter != null) {
                 androidx.compose.foundation.Image(
@@ -244,7 +247,7 @@ class AlarmRingingActivity : ComponentActivity() {
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                    alpha = 0.30f
+                    alpha = 0.40f
                 )
             }
 
@@ -356,6 +359,49 @@ class AlarmRingingActivity : ComponentActivity() {
                         color = Color.White,
                         textAlign = TextAlign.Center
                     )
+
+                    val prayerText = verseEntity?.prayer
+                    if (!prayerText.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White.copy(alpha = 0.12f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Favorite,
+                                        contentDescription = "Prayer",
+                                        tint = Color(0xFFFBBF24),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Pag-ampo (Prayer)",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = Color(0xFFFBBF24)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = prayerText,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = 15.sp,
+                                        lineHeight = 22.sp
+                                    ),
+                                    color = Color.White.copy(alpha = 0.95f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
                 }
             }
 

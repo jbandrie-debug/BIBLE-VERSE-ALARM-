@@ -104,7 +104,8 @@ class VerseViewModel(
             previewTts = TtsManager(context.applicationContext)
         }
         previewTts?.configure(speechRate = rate, pitch = pitch)
-        val textToSpeak = "Verse from ${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}. ${verse.text}"
+        val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
+        val textToSpeak = "Verse from ${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}. ${verse.text}$prayerPart"
         previewTts?.speak(textToSpeak)
     }
 
