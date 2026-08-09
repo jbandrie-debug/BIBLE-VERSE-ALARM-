@@ -240,60 +240,62 @@ class AlarmService : Service() {
             val db = AppDatabase.getInstance(applicationContext)
             val settings = db.userSettingsDao().getUserSettingsDirect()
             val voiceName = settings?.ttsVoiceName ?: ""
+            val rate = if (alarm.ttsSpeechRate > 0) alarm.ttsSpeechRate else (settings?.defaultSpeechRate ?: 1.0f)
+            val pitch = if (alarm.ttsPitch > 0) alarm.ttsPitch else (settings?.defaultPitch ?: 1.0f)
+
             withContext(Dispatchers.Main) {
                 ttsManager?.configure(
-                    speechRate = alarm.ttsSpeechRate,
-                    pitch = alarm.ttsPitch,
+                    speechRate = rate,
+                    pitch = pitch,
                     voiceName = voiceName
                 )
-            }
-        }
 
-        if (alarm.isVibrate) {
-            startVibration()
-        }
+                if (alarm.isVibrate) {
+                    startVibration()
+                }
 
-        val greeting = DateTimeUtils.getTimeBasedGreeting(alarm.timeHour)
-        val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
-        val verseTextToSpeak = "$greeting! Here is your Bible verse for today. " +
-                "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}. " +
-                "${verse.text}$prayerPart"
+                val greeting = DateTimeUtils.getTimeBasedGreeting(alarm.timeHour)
+                val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
+                val verseTextToSpeak = "$greeting! Here is your Bible verse for today. " +
+                        "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}. " +
+                        "${verse.text}$prayerPart"
 
-        when (alarm.soundMode) {
-            SoundMode.VERSE_THEN_ALARM -> {
-                ttsManager?.speak(
-                    text = verseTextToSpeak,
-                    onStart = { notifyVerseSpeaking(verse) },
-                    onDone = {
-                        // When TTS finishes, start Ringtone
-                        serviceScope.launch(Dispatchers.Main) {
-                            startRingtone(alarm)
+                when (alarm.soundMode) {
+                    SoundMode.VERSE_THEN_ALARM -> {
+                        ttsManager?.speak(
+                            text = verseTextToSpeak,
+                            onStart = { notifyVerseSpeaking(verse) },
+                            onDone = {
+                                serviceScope.launch(Dispatchers.Main) {
+                                    startRingtone(alarm)
+                                }
+                            }
+                        )
+                    }
+                    SoundMode.ALARM_THEN_VERSE -> {
+                        startRingtone(alarm)
+                        serviceScope.launch {
+                            delay(10000) // Ring for 10 seconds first
+                            withContext(Dispatchers.Main) {
+                                stopRingtone()
+                                ttsManager?.speak(
+                                    text = verseTextToSpeak,
+                                    onStart = { notifyVerseSpeaking(verse) }
+                                )
+                            }
                         }
                     }
-                )
-            }
-            SoundMode.ALARM_THEN_VERSE -> {
-                startRingtone(alarm)
-                serviceScope.launch {
-                    delay(10000) // Ring for 10 seconds first
-                    withContext(Dispatchers.Main) {
-                        stopRingtone()
+                    SoundMode.VERSE_ONLY -> {
                         ttsManager?.speak(
                             text = verseTextToSpeak,
                             onStart = { notifyVerseSpeaking(verse) }
                         )
                     }
+                    SoundMode.ALARM_ONLY -> {
+                        startRingtone(alarm)
+                        notifyVerseSpeaking(verse)
+                    }
                 }
-            }
-            SoundMode.VERSE_ONLY -> {
-                ttsManager?.speak(
-                    text = verseTextToSpeak,
-                    onStart = { notifyVerseSpeaking(verse) }
-                )
-            }
-            SoundMode.ALARM_ONLY -> {
-                startRingtone(alarm)
-                notifyVerseSpeaking(verse)
             }
         }
     }

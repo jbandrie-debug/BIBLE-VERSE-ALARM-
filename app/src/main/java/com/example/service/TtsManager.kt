@@ -122,25 +122,34 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
             Log.w("TtsManager", "Could not set audio attributes for TTS: ${e.message}")
         }
 
+        // Set default language first
+        tts?.language = language
+
         val voices = tts?.voices
         if (!voices.isNullOrEmpty()) {
+            var selectedVoice: android.speech.tts.Voice? = null
+
             if (voiceName.isNotBlank()) {
-                val matchingVoice = voices.find { it.name == voiceName }
-                if (matchingVoice != null) {
-                    tts?.voice = matchingVoice
-                    return
-                }
+                selectedVoice = voices.find { it.name == voiceName }
+                    ?: when (voiceName) {
+                        "en-us-standard" -> findBestNaturalVoice(voices, Locale.US)
+                        "en-gb-standard" -> findBestNaturalVoice(voices, Locale.UK)
+                        "fil-ph-standard" -> findBestNaturalVoice(voices, Locale("fil", "PH"))
+                        else -> null
+                    }
             }
 
-            // Automatically select the highest quality natural human voice matching target locale
-            val bestVoice = findBestNaturalVoice(voices, language)
-            if (bestVoice != null) {
-                tts?.voice = bestVoice
-                return
+            if (selectedVoice == null) {
+                selectedVoice = findBestNaturalVoice(voices, language)
+            }
+
+            if (selectedVoice != null) {
+                if (selectedVoice.locale != null) {
+                    tts?.language = selectedVoice.locale
+                }
+                tts?.voice = selectedVoice
             }
         }
-
-        tts?.language = language
     }
 
     private fun findBestNaturalVoice(voices: Set<android.speech.tts.Voice>, targetLocale: Locale): android.speech.tts.Voice? {
@@ -291,6 +300,7 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         if (playBell) {
             ChurchBellPlayer.playChurchBell(context) {
                 if (isInitialized) {
+                    applyConfiguration()
                     tts?.speak(textToSpeak, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
                 } else {
                     pendingSpeechText = textToSpeak
@@ -299,6 +309,7 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
             }
         } else {
             if (isInitialized) {
+                applyConfiguration()
                 tts?.speak(textToSpeak, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
             } else {
                 pendingSpeechText = textToSpeak

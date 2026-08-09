@@ -102,17 +102,26 @@ class VerseViewModel(
     fun previewVerseSpeech(
         context: Context,
         verse: VerseEntity,
-        rate: Float = 1.0f,
-        pitch: Float = 1.0f,
-        voiceName: String = ""
+        rate: Float? = null,
+        pitch: Float? = null,
+        voiceName: String? = null
     ) {
-        if (previewTts == null) {
-            previewTts = TtsManager(context.applicationContext)
+        viewModelScope.launch {
+            val db = com.example.data.database.AppDatabase.getInstance(context.applicationContext)
+            val settings = db.userSettingsDao().getUserSettingsDirect()
+
+            val finalRate = rate ?: settings?.defaultSpeechRate ?: 1.0f
+            val finalPitch = pitch ?: settings?.defaultPitch ?: 1.0f
+            val finalVoiceName = voiceName ?: settings?.ttsVoiceName ?: ""
+
+            if (previewTts == null) {
+                previewTts = TtsManager(context.applicationContext)
+            }
+            previewTts?.configure(speechRate = finalRate, pitch = finalPitch, voiceName = finalVoiceName)
+            val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
+            val textToSpeak = "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}. ${verse.text}$prayerPart"
+            previewTts?.speak(textToSpeak, playBell = false)
         }
-        previewTts?.configure(speechRate = rate, pitch = pitch, voiceName = voiceName)
-        val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
-        val textToSpeak = "Verse from ${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}. ${verse.text}$prayerPart"
-        previewTts?.speak(textToSpeak, playBell = false)
     }
 
     fun getAvailableVoiceProfiles(context: Context): List<com.example.service.VoiceProfile> {
