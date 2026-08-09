@@ -300,7 +300,7 @@ fun DailyVerseHeroCard(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Pag-ampo (Prayer)",
+                                    text = "Panalangin (Prayer)",
                                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                     color = Color(0xFFFBBF24)
                                 )
@@ -414,7 +414,7 @@ fun VerseCardItem(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Pag-ampo (Prayer)",
+                                text = "Panalangin (Prayer)",
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -481,7 +481,7 @@ fun AddCustomVerseDialog(
                 OutlinedTextField(
                     value = prayer,
                     onValueChange = { prayer = it },
-                    label = { Text("Pag-ampo / Prayer (Optional)") },
+                    label = { Text("Panalangin / Prayer (Optional)") },
                     maxLines = 3
                 )
             }

@@ -384,7 +384,7 @@ class AlarmRingingActivity : ComponentActivity() {
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "Pag-ampo (Prayer)",
+                                        text = "Panalangin (Prayer)",
                                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                         color = Color(0xFFFBBF24)
                                     )
