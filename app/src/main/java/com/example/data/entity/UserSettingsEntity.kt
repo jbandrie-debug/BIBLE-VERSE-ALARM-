@@ -14,5 +14,6 @@ data class UserSettingsEntity(
     val defaultSoundMode: String = "VERSE_THEN_ALARM",
     val defaultTranslation: String = "KJV",
     val ttsLanguage: String = "en-US",
+    val ttsVoiceName: String = "",
     val alarmVolume: Int = 80
 )

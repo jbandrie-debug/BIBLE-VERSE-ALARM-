@@ -236,10 +236,18 @@ class AlarmService : Service() {
     }
 
     private fun executeAlarmAudioFlow(alarm: AlarmEntity, verse: VerseEntity) {
-        ttsManager?.configure(
-            speechRate = alarm.ttsSpeechRate,
-            pitch = alarm.ttsPitch
-        )
+        serviceScope.launch(Dispatchers.IO) {
+            val db = AppDatabase.getInstance(applicationContext)
+            val settings = db.userSettingsDao().getUserSettingsDirect()
+            val voiceName = settings?.ttsVoiceName ?: ""
+            withContext(Dispatchers.Main) {
+                ttsManager?.configure(
+                    speechRate = alarm.ttsSpeechRate,
+                    pitch = alarm.ttsPitch,
+                    voiceName = voiceName
+                )
+            }
+        }
 
         if (alarm.isVibrate) {
             startVibration()

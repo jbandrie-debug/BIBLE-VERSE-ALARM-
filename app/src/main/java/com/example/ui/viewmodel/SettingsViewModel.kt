@@ -27,10 +27,10 @@ class SettingsViewModel(
         }
     }
 
-    fun updateDefaultTts(rate: Float, pitch: Float) {
+    fun updateDefaultTts(rate: Float, pitch: Float, voiceName: String = "") {
         viewModelScope.launch {
             val current = repository.getSettingsDirect()
-            repository.updateSettings(current.copy(defaultSpeechRate = rate, defaultPitch = pitch))
+            repository.updateSettings(current.copy(defaultSpeechRate = rate, defaultPitch = pitch, ttsVoiceName = voiceName))
         }
     }
 

@@ -99,14 +99,27 @@ class VerseViewModel(
 
     fun isFavorite(verseId: Long) = repository.isFavorite(verseId)
 
-    fun previewVerseSpeech(context: Context, verse: VerseEntity, rate: Float = 1.0f, pitch: Float = 1.0f) {
+    fun previewVerseSpeech(
+        context: Context,
+        verse: VerseEntity,
+        rate: Float = 1.0f,
+        pitch: Float = 1.0f,
+        voiceName: String = ""
+    ) {
         if (previewTts == null) {
             previewTts = TtsManager(context.applicationContext)
         }
-        previewTts?.configure(speechRate = rate, pitch = pitch)
+        previewTts?.configure(speechRate = rate, pitch = pitch, voiceName = voiceName)
         val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
         val textToSpeak = "Verse from ${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}. ${verse.text}$prayerPart"
-        previewTts?.speak(textToSpeak)
+        previewTts?.speak(textToSpeak, playBell = false)
+    }
+
+    fun getAvailableVoiceProfiles(context: Context): List<com.example.service.VoiceProfile> {
+        if (previewTts == null) {
+            previewTts = TtsManager(context.applicationContext)
+        }
+        return previewTts?.getAvailableVoiceProfiles() ?: emptyList()
     }
 
     fun stopSpeechPreview() {

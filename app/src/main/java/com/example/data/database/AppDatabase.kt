@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
         FavoriteVerseEntity::class,
         UserSettingsEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

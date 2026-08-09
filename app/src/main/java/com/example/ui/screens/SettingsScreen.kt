@@ -59,6 +59,16 @@ import com.example.data.entity.VerseEntity
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.ui.viewmodel.VerseViewModel
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -70,6 +80,15 @@ fun SettingsScreen(
 
     var rate by remember(settings) { mutableFloatStateOf(settings?.defaultSpeechRate ?: 1.0f) }
     var pitch by remember(settings) { mutableFloatStateOf(settings?.defaultPitch ?: 1.0f) }
+    var selectedVoiceName by remember(settings) { mutableStateOf(settings?.ttsVoiceName ?: "") }
+
+    val voiceProfiles = remember(context) { verseViewModel.getAvailableVoiceProfiles(context) }
+    var expandedVoiceMenu by remember { mutableStateOf(false) }
+
+    val currentVoiceDisplayName = remember(selectedVoiceName, voiceProfiles) {
+        voiceProfiles.find { it.id == selectedVoiceName }?.displayName
+            ?: if (selectedVoiceName.isNotBlank()) selectedVoiceName else "Default System Voice"
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -149,11 +168,20 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Default Text-To-Speech Voice",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.RecordVoiceOver,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Text-To-Speech Settings",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             OutlinedButton(
                                 onClick = {
                                     ChurchBellPlayer.playChurchBell(context)
@@ -163,14 +191,15 @@ fun SettingsScreen(
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Bell")
                             }
-                            OutlinedButton(
+                            Button(
                                 onClick = {
                                     val dummyVerse = VerseEntity(
                                         book = "Philippians", chapter = 4, verseNumber = 13,
                                         text = "I can do all things through Christ which strengtheneth me.",
-                                        translation = "KJV"
+                                        translation = "KJV",
+                                        prayer = "Panginoong Hesus, salamat dahil sa Iyo ay mayroon akong lakas upang magtagumpay sa lahat ng pagsubok ngayong araw. Amen."
                                     )
-                                    verseViewModel.previewVerseSpeech(context, dummyVerse, rate, pitch)
+                                    verseViewModel.previewVerseSpeech(context, dummyVerse, rate, pitch, selectedVoiceName)
                                 }
                             ) {
                                 Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -180,27 +209,144 @@ fun SettingsScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    Text("Speech Speed: ${String.format("%.1f", rate)}x")
+                    // Voice Profile Picker
+                    Text(
+                        text = "System Voice Profile",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    
+                    Surface(
+                        onClick = { expandedVoiceMenu = true },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = currentVoiceDisplayName,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                maxLines = 1
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Select Voice"
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = expandedVoiceMenu,
+                            onDismissRequest = { expandedVoiceMenu = false }
+                        ) {
+                            voiceProfiles.forEach { profile ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(
+                                                text = profile.displayName,
+                                                fontWeight = if (profile.id == selectedVoiceName) FontWeight.Bold else FontWeight.Normal
+                                            )
+                                            Text(
+                                                text = "Locale: ${profile.locale}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedVoiceName = profile.id
+                                        settingsViewModel.updateDefaultTts(rate, pitch, selectedVoiceName)
+                                        expandedVoiceMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Playback Speed
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Playback Speed",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "${String.format("%.2f", rate)}x",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    // Speed Presets
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(0.75f, 1.0f, 1.25f, 1.5f, 2.0f).forEach { speedPreset ->
+                            val isSelected = (Math.abs(rate - speedPreset) < 0.05f)
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    rate = speedPreset
+                                    settingsViewModel.updateDefaultTts(rate, pitch, selectedVoiceName)
+                                },
+                                label = { Text(if (speedPreset == 1.0f) "1.0x (Normal)" else "${speedPreset}x") }
+                            )
+                        }
+                    }
+
                     Slider(
                         value = rate,
                         onValueChange = {
                             rate = it
-                            settingsViewModel.updateDefaultTts(rate, pitch)
+                            settingsViewModel.updateDefaultTts(rate, pitch, selectedVoiceName)
                         },
                         valueRange = 0.5f..2.0f,
                         steps = 15
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    Text("Speech Pitch: ${String.format("%.1f", pitch)}")
+                    // Voice Pitch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Voice Pitch",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "${String.format("%.2f", pitch)}",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
                     Slider(
                         value = pitch,
                         onValueChange = {
                             pitch = it
-                            settingsViewModel.updateDefaultTts(rate, pitch)
+                            settingsViewModel.updateDefaultTts(rate, pitch, selectedVoiceName)
                         },
                         valueRange = 0.5f..2.0f,
                         steps = 15

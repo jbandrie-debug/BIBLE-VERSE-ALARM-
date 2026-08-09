@@ -81,25 +81,35 @@ object ChurchBellPlayer {
 
                 currentAudioTrack = audioTrack
 
-                audioTrack.play()
-                audioTrack.write(pcmData, 0, pcmData.size)
+                if (audioTrack.state == AudioTrack.STATE_INITIALIZED) {
+                    audioTrack.play()
+                    audioTrack.write(pcmData, 0, pcmData.size)
 
-                // Calculate total duration in milliseconds
-                val durationMs = (pcmData.size.toDouble() / SAMPLE_RATE * 1000).toLong()
+                    // Calculate total duration in milliseconds
+                    val durationMs = (pcmData.size.toDouble() / SAMPLE_RATE * 1000).toLong()
 
-                var elapsed = 0L
-                val interval = 50L
-                while (elapsed < durationMs && isPlaying) {
-                    kotlinx.coroutines.delay(interval)
-                    elapsed += interval
+                    var elapsed = 0L
+                    val interval = 50L
+                    while (elapsed < durationMs && isPlaying) {
+                        kotlinx.coroutines.delay(interval)
+                        elapsed += interval
+                    }
+                } else {
+                    Log.e("ChurchBellPlayer", "AudioTrack failed to initialize")
                 }
 
             } catch (e: Exception) {
                 Log.e("ChurchBellPlayer", "Error playing church bell", e)
             } finally {
                 try {
-                    audioTrack?.stop()
-                    audioTrack?.release()
+                    audioTrack?.let { track ->
+                        if (track.state == AudioTrack.STATE_INITIALIZED) {
+                            if (track.playState != AudioTrack.PLAYSTATE_STOPPED) {
+                                track.stop()
+                            }
+                        }
+                        track.release()
+                    }
                 } catch (e: Exception) {
                     Log.e("ChurchBellPlayer", "Error releasing audio track", e)
                 }
@@ -118,8 +128,14 @@ object ChurchBellPlayer {
     fun stop() {
         isPlaying = false
         try {
-            currentAudioTrack?.stop()
-            currentAudioTrack?.release()
+            currentAudioTrack?.let { track ->
+                if (track.state == AudioTrack.STATE_INITIALIZED) {
+                    if (track.playState != AudioTrack.PLAYSTATE_STOPPED) {
+                        track.stop()
+                    }
+                }
+                track.release()
+            }
         } catch (e: Exception) {
             Log.e("ChurchBellPlayer", "Error stopping church bell player", e)
         }
