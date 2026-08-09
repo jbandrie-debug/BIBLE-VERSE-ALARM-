@@ -34,9 +34,11 @@ import com.example.data.entity.AlarmEntity
 import com.example.ui.screens.AddEditAlarmScreen
 import com.example.ui.screens.AlarmsScreen
 import com.example.ui.screens.FavoritesScreen
+import com.example.ui.screens.GeminiAiScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.VersesScreen
 import com.example.ui.viewmodel.AlarmViewModel
+import com.example.ui.viewmodel.GeminiViewModel
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.ui.viewmodel.VerseViewModel
 
@@ -44,7 +46,8 @@ import com.example.ui.viewmodel.VerseViewModel
 fun MainNavGraph(
     alarmViewModel: AlarmViewModel,
     verseViewModel: VerseViewModel,
-    settingsViewModel: SettingsViewModel
+    settingsViewModel: SettingsViewModel,
+    geminiViewModel: GeminiViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -55,6 +58,7 @@ fun MainNavGraph(
     val bottomBarScreens = listOf(
         Screen.Alarms,
         Screen.Verses,
+        Screen.GeminiAi,
         Screen.Favorites,
         Screen.Settings
     )
@@ -140,6 +144,10 @@ fun MainNavGraph(
 
                 composable(Screen.Verses.route) {
                     VersesScreen(viewModel = verseViewModel)
+                }
+
+                composable(Screen.GeminiAi.route) {
+                    GeminiAiScreen(viewModel = geminiViewModel)
                 }
 
                 composable(Screen.Favorites.route) {

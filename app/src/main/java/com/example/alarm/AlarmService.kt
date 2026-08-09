@@ -161,23 +161,41 @@ class AlarmService : Service() {
         )
 
         val stopIntent = Intent(this, AlarmService::class.java).apply { action = ACTION_STOP }
-        val stopPendingIntent = PendingIntent.getService(
-            this,
-            (alarm.id * 10 + 1).toInt(),
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val stopPendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(
+                this,
+                (alarm.id * 10 + 1).toInt(),
+                stopIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        } else {
+            PendingIntent.getService(
+                this,
+                (alarm.id * 10 + 1).toInt(),
+                stopIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
 
         val snoozeIntent = Intent(this, AlarmService::class.java).apply {
             action = ACTION_SNOOZE
             putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarm.id)
         }
-        val snoozePendingIntent = PendingIntent.getService(
-            this,
-            (alarm.id * 10 + 2).toInt(),
-            snoozeIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val snoozePendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(
+                this,
+                (alarm.id * 10 + 2).toInt(),
+                snoozeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        } else {
+            PendingIntent.getService(
+                this,
+                (alarm.id * 10 + 2).toInt(),
+                snoozeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)

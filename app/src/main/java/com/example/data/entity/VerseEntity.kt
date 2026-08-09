@@ -1,9 +1,15 @@
 package com.example.data.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "verses")
+@Entity(
+    tableName = "verses",
+    indices = [
+        Index(value = ["book", "chapter", "verseNumber", "translation"], unique = true)
+    ]
+)
 data class VerseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val book: String,
@@ -13,3 +19,4 @@ data class VerseEntity(
     val translation: String = "KJV",
     val category: String = "Inspiration"
 )
+

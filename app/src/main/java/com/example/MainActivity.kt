@@ -24,6 +24,7 @@ import com.example.data.repository.VerseRepository
 import com.example.ui.navigation.MainNavGraph
 import com.example.ui.theme.BibleVerseAlarmTheme
 import com.example.ui.viewmodel.AlarmViewModel
+import com.example.ui.viewmodel.GeminiViewModel
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.ui.viewmodel.VerseViewModel
 
@@ -52,6 +53,7 @@ class MainActivity : ComponentActivity() {
         val alarmViewModel = AlarmViewModel(alarmRepo, scheduler)
         val verseViewModel = VerseViewModel(verseRepo)
         val settingsViewModel = SettingsViewModel(settingsRepo)
+        val geminiViewModel = GeminiViewModel(application)
 
         setContent {
             val userSettings by settingsViewModel.settings.collectAsState()
@@ -70,7 +72,8 @@ class MainActivity : ComponentActivity() {
                     MainNavGraph(
                         alarmViewModel = alarmViewModel,
                         verseViewModel = verseViewModel,
-                        settingsViewModel = settingsViewModel
+                        settingsViewModel = settingsViewModel,
+                        geminiViewModel = geminiViewModel
                     )
                 }
             }

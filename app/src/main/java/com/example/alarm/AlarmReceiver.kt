@@ -72,7 +72,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 val stopServiceIntent = Intent(context, AlarmService::class.java).apply {
                     this.action = AlarmService.ACTION_STOP
                 }
-                context.startService(stopServiceIntent)
+                androidx.core.content.ContextCompat.startForegroundService(context, stopServiceIntent)
             }
 
             ACTION_SNOOZE_ALARM -> {
@@ -81,7 +81,7 @@ class AlarmReceiver : BroadcastReceiver() {
                     this.action = AlarmService.ACTION_SNOOZE
                     putExtra(EXTRA_ALARM_ID, alarmId)
                 }
-                context.startService(snoozeIntent)
+                androidx.core.content.ContextCompat.startForegroundService(context, snoozeIntent)
             }
         }
     }

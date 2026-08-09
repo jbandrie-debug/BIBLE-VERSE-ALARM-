@@ -51,7 +51,10 @@ interface VerseDao {
     @Query("SELECT COUNT(*) FROM verses")
     suspend fun getVerseCount(): Int
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Query("DELETE FROM verses WHERE id NOT IN (SELECT MIN(id) FROM verses GROUP BY book, chapter, verseNumber, translation)")
+    suspend fun removeDuplicates()
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertVerses(verses: List<VerseEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -231,15 +231,17 @@ fun DailyVerseHeroCard(
                         )
                     }
 
-                    IconButton(
-                        onClick = onListen,
-                        modifier = Modifier.testTag("listen_daily_verse_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = "Listen Verse",
-                            tint = Color.White
-                        )
+                    Row {
+                        IconButton(
+                            onClick = onListen,
+                            modifier = Modifier.testTag("listen_daily_verse_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                contentDescription = "Listen Verse",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
 

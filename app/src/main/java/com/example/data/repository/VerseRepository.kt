@@ -36,7 +36,12 @@ class VerseRepository(
         verseDao.getRandomVerseByTranslation(translation)
 
     suspend fun ensureVersesLoaded() {
-        if (verseDao.getVerseCount() < com.example.util.InitialBibleVerses.verses.size) {
+        try {
+            verseDao.removeDuplicates()
+        } catch (e: Exception) {
+            // Ignore if index migration in progress
+        }
+        if (verseDao.getVerseCount() == 0) {
             verseDao.insertVerses(com.example.util.InitialBibleVerses.verses)
         }
     }

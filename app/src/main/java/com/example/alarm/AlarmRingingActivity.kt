@@ -133,14 +133,14 @@ class AlarmRingingActivity : ComponentActivity() {
                                 action = AlarmService.ACTION_SNOOZE
                                 putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId)
                             }
-                            startService(snoozeIntent)
+                            ContextCompat.startForegroundService(this, snoozeIntent)
                             finish()
                         },
                         onStop = {
                             val stopIntent = Intent(this, AlarmService::class.java).apply {
                                 action = AlarmService.ACTION_STOP
                             }
-                            startService(stopIntent)
+                            ContextCompat.startForegroundService(this, stopIntent)
                             finish()
                         }
                     )
