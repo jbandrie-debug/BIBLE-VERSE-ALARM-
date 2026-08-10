@@ -118,8 +118,18 @@ class VerseViewModel(
                 previewTts = TtsManager(context.applicationContext)
             }
             previewTts?.configure(speechRate = finalRate, pitch = finalPitch, voiceName = finalVoiceName)
-            val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
-            val textToSpeak = "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}. ${verse.text}$prayerPart"
+            val isTagalogSpeech = finalVoiceName.contains("filipino") || finalVoiceName.contains("tagalog") || finalVoiceName.contains("pedro") ||
+                    verse.translation.equals("FSV", ignoreCase = true) || verse.translation.equals("TAG", ignoreCase = true) ||
+                    verse.translation.equals("ADB", ignoreCase = true) || verse.translation.equals("SND", ignoreCase = true)
+
+            val prayerLabel = if (isTagalogSpeech) ". Panalangin: " else ". Prayer: "
+            val prayerPart = if (verse.prayer.isNotBlank()) "$prayerLabel${verse.prayer}" else ""
+            val referencePart = if (isTagalogSpeech) {
+                "${verse.book}, kapitulo ${verse.chapter}, bersikulo ${verse.verseNumber}"
+            } else {
+                "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}"
+            }
+            val textToSpeak = "$referencePart. ${verse.text}$prayerPart"
             previewTts?.speak(textToSpeak, playBell = false)
         }
     }

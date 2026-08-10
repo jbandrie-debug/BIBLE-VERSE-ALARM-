@@ -112,28 +112,33 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         var effectiveRate = speechRate
 
         when (voiceName) {
+            "preset-kuya-pedro" -> {
+                effectivePitch = 0.75f // Warm, calm, meditative Kuya Pedro male voice
+                effectiveRate = 0.85f  // Smooth, relaxing Tagalog meditation speed
+                this.language = Locale("fil", "PH")
+            }
             "preset-filipino-pastor" -> {
-                effectivePitch = 0.72f // Deep, resonant, solemn Tagalog Pastor tone
-                effectiveRate = 0.84f  // Calm, reverent preaching/reading speed
+                effectivePitch = 0.72f // Solemn, reverent Tagalog Pastor baritone
+                effectiveRate = 0.82f  // Calm preaching cadence
                 this.language = Locale("fil", "PH")
             }
             "preset-tagalog-male" -> {
-                effectivePitch = 0.74f // Deep Tagalog fatherly male voice
-                effectiveRate = 0.88f  // Reverent Tagalog reading
+                effectivePitch = 0.78f // Natural Tagalog fatherly male voice
+                effectiveRate = 0.88f  // Reverent Tagalog reading speed
                 this.language = Locale("fil", "PH")
             }
             "preset-tagalog-female" -> {
-                effectivePitch = 1.02f // Soft Tagalog female voice
-                effectiveRate = 0.92f  // Gentle Tagalog reading
+                effectivePitch = 1.08f // Bright, soft Tagalog female voice
+                effectiveRate = 0.92f  // Gentle Tagalog reading speed
                 this.language = Locale("fil", "PH")
             }
             "preset-old-male" -> {
-                effectivePitch = 0.72f // Deep, warm elder male / pastor tone
-                effectiveRate = 0.84f  // Calm, reverent reading speed
+                effectivePitch = 0.68f // Deep, warm elder pastor tone
+                effectiveRate = 0.80f  // Slow, solemn elder reading speed
                 this.language = Locale("fil", "PH")
             }
             "preset-soft-female" -> {
-                effectivePitch = 1.05f // Soft, warm female tone
+                effectivePitch = 1.12f // Soft, warm female tone
                 effectiveRate = 0.92f  // Gentle devotional reading speed
             }
             "preset-soft-warm" -> {
@@ -165,10 +170,18 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         val voices = tts?.voices
         if (!voices.isNullOrEmpty()) {
             var selectedVoice: android.speech.tts.Voice? = null
+            val isMaleRequested = voiceName == "preset-kuya-pedro" ||
+                    voiceName == "preset-filipino-pastor" ||
+                    voiceName == "preset-tagalog-male" ||
+                    voiceName == "preset-old-male"
+
+            val isFemaleRequested = voiceName == "preset-tagalog-female" ||
+                    voiceName == "preset-soft-female"
 
             if (voiceName.isNotBlank()) {
                 selectedVoice = voices.find { it.name == voiceName }
                     ?: when (voiceName) {
+                        "preset-kuya-pedro" -> findBestVoiceByGenderAndLocale(voices, Locale("fil", "PH"), preferFemale = false)
                         "preset-filipino-pastor" -> findBestVoiceByGenderAndLocale(voices, Locale("fil", "PH"), preferFemale = false)
                         "preset-old-male" -> findBestVoiceByGenderAndLocale(voices, language, preferFemale = false)
                         "preset-soft-female" -> findBestVoiceByGenderAndLocale(voices, language, preferFemale = true)
@@ -187,27 +200,37 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
             }
 
             if (selectedVoice != null) {
-                if (selectedVoice.locale != null) {
-                    try {
-                        tts?.language = selectedVoice.locale
-                    } catch (e: Exception) {
-                        Log.w("TtsManager", "Could not set locale ${selectedVoice.locale}: ${e.message}")
+                val isExplicitFemale = isExplicitFemaleVoice(selectedVoice)
+                val isExplicitMale = isExplicitMaleVoice(selectedVoice)
+
+                // If male voice was requested but the matched voice is explicitly female (e.g., emulator has only female fil-PH voice file),
+                // do NOT set tts.voice to the female object! Unsetting tts.voice allows pitch modulation (0.72f baritone) to create a male pastor voice.
+                if (isMaleRequested && isExplicitFemale) {
+                    Log.d("TtsManager", "Male voice requested but only female voice available (${selectedVoice.name}). Relying on pitch modulation for pastor baritone.")
+                } else if (isFemaleRequested && isExplicitMale) {
+                    Log.d("TtsManager", "Female voice requested but only male voice available (${selectedVoice.name}). Skipping tts.voice binding.")
+                } else {
+                    if (selectedVoice.locale != null) {
+                        try {
+                            tts?.language = selectedVoice.locale
+                        } catch (e: Exception) {
+                            Log.w("TtsManager", "Could not set locale ${selectedVoice.locale}: ${e.message}")
+                        }
                     }
+                    tts?.voice = selectedVoice
                 }
-                tts?.voice = selectedVoice
             }
         }
     }
 
     private fun isExplicitMaleVoice(voice: android.speech.tts.Voice): Boolean {
         val name = voice.name.lowercase()
-        if (name.contains("female") || name.contains("woman") || name.contains("-fic") || name.contains("-f-") || name.contains("-f_") || name.contains("-sfg") || name.contains("-sfe")) {
-            return false
-        }
-        if (name.contains("male") || name.contains("man") || name.contains("-mab") || name.contains("-m-") || name.contains("-m_") || name.contains("deep") || name.contains("-iom") || name.contains("-iog")) {
-            return true
-        }
-        if (name.contains("-x-m") || Regex(".*-[a-z]{2,3}-x-m.*").matches(name)) {
+        if (isExplicitFemaleVoice(voice)) return false
+        if (name.contains("male") || name.contains("man") || name.contains("-mab") || name.contains("-mac") ||
+            name.contains("-mad") || name.contains("-mae") || name.contains("-m-") || name.contains("_m_") ||
+            name.contains("deep") || name.contains("-iom") || name.contains("-iog") ||
+            name.contains("-x-m") || Regex(".*-[a-z]{2,3}-x-m.*").matches(name)
+        ) {
             return true
         }
         return false
@@ -215,13 +238,11 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
 
     private fun isExplicitFemaleVoice(voice: android.speech.tts.Voice): Boolean {
         val name = voice.name.lowercase()
-        if (name.contains("male") || name.contains("man") || name.contains("-mab") || name.contains("-m-") || name.contains("-m_") || name.contains("-iom") || name.contains("-iog")) {
-            return false
-        }
-        if (name.contains("female") || name.contains("woman") || name.contains("-fic") || name.contains("-f-") || name.contains("-f_") || name.contains("soft") || name.contains("-sfg") || name.contains("-sfe")) {
-            return true
-        }
-        if (name.contains("-x-f") || Regex(".*-[a-z]{2,3}-x-f.*").matches(name)) {
+        if (name.contains("female") || name.contains("woman") || name.contains("soft") ||
+            name.contains("-fic") || name.contains("-fid") || name.contains("-fie") || name.contains("-fia") ||
+            name.contains("-f-") || name.contains("_f_") || name.contains("-sfg") || name.contains("-sfe") ||
+            name.contains("-x-f") || Regex(".*-[a-z]{2,3}-x-f.*").matches(name)
+        ) {
             return true
         }
         return false
@@ -318,6 +339,13 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
 
     fun getAvailableVoiceProfiles(): List<VoiceProfile> {
         val result = mutableListOf<VoiceProfile>()
+        result.add(
+            VoiceProfile(
+                id = "preset-kuya-pedro",
+                displayName = "🎙️ Kuya Pedro (Warm, Meditative Tagalog Voice) ✨",
+                locale = "fil-PH"
+            )
+        )
         result.add(
             VoiceProfile(
                 id = "preset-filipino-pastor",

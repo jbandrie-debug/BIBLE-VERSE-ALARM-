@@ -194,12 +194,22 @@ fun SettingsScreen(
                             }
                             Button(
                                 onClick = {
-                                    val dummyVerse = VerseEntity(
-                                        book = "Philippians", chapter = 4, verseNumber = 13,
-                                        text = "I can do all things through Christ which strengtheneth me.",
-                                        translation = "KJV",
-                                        prayer = "Panginoong Hesus, salamat dahil sa Iyo ay mayroon akong lakas upang magtagumpay sa lahat ng pagsubok ngayong araw. Amen."
-                                    )
+                                    val isTagalogPreset = selectedVoiceName.contains("filipino") || selectedVoiceName.contains("tagalog") || selectedVoiceName.contains("pedro") || selectedVoiceName == "preset-old-male"
+                                    val dummyVerse = if (isTagalogPreset) {
+                                        VerseEntity(
+                                            book = "Filipos", chapter = 4, verseNumber = 13,
+                                            text = "Kaya kong gawin ang lahat ng bagay sa pamamagitan Niya na nagpapalakas sa akin.",
+                                            translation = "FSV",
+                                            prayer = "Panginoong Hesus, salamat dahil sa Iyo ay mayroon akong lakas upang magtagumpay sa lahat ng pagsubok ngayong araw. Amen."
+                                        )
+                                    } else {
+                                        VerseEntity(
+                                            book = "Philippians", chapter = 4, verseNumber = 13,
+                                            text = "I can do all things through Christ which strengtheneth me.",
+                                            translation = "KJV",
+                                            prayer = "Lord Jesus, thank You for giving me strength to overcome every challenge today. Amen."
+                                        )
+                                    }
                                     verseViewModel.previewVerseSpeech(context, dummyVerse, rate, pitch, selectedVoiceName)
                                 }
                             ) {
@@ -227,11 +237,12 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         val presets = listOf(
-                            Triple("preset-filipino-pastor", "⛪ Filipino Pastor", 0.70f),
-                            Triple("preset-tagalog-male", "🇵🇭 Tagalog Male", 0.76f),
-                            Triple("preset-tagalog-female", "🇵🇭 Tagalog Female", 1.06f),
-                            Triple("preset-old-male", "👴 Elder Pastor", 0.72f),
-                            Triple("preset-soft-female", "👩 Soft Female", 1.08f),
+                            Triple("preset-kuya-pedro", "🎙️ Kuya Pedro", 0.75f),
+                            Triple("preset-filipino-pastor", "⛪ Filipino Pastor", 0.72f),
+                            Triple("preset-tagalog-male", "🇵🇭 Tagalog Male", 0.78f),
+                            Triple("preset-tagalog-female", "🇵🇭 Tagalog Female", 1.08f),
+                            Triple("preset-old-male", "👴 Elder Pastor", 0.68f),
+                            Triple("preset-soft-female", "👩 Soft Female", 1.12f),
                             Triple("preset-soft-warm", "🕊️ Soft & Warm", 0.95f)
                         )
 
@@ -242,7 +253,7 @@ fun SettingsScreen(
                                 onClick = {
                                     selectedVoiceName = presetId
                                     pitch = presetPitch
-                                    rate = if (presetId.contains("old") || presetId.contains("male")) 0.88f else 0.92f
+                                    rate = if (presetId.contains("old") || presetId.contains("male") || presetId.contains("pastor")) 0.82f else 0.92f
                                     settingsViewModel.updateDefaultTts(rate, pitch, selectedVoiceName)
                                 },
                                 label = { Text(label, style = MaterialTheme.typography.labelMedium) }
