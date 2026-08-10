@@ -48,6 +48,19 @@ class SettingsViewModel(
         }
     }
 
+    fun updateElevenLabsSettings(enabled: Boolean, apiKey: String, voiceId: String) {
+        viewModelScope.launch {
+            val current = repository.getSettingsDirect()
+            repository.updateSettings(
+                current.copy(
+                    useElevenLabs = enabled,
+                    elevenLabsApiKey = apiKey,
+                    elevenLabsVoiceId = voiceId
+                )
+            )
+        }
+    }
+
     fun updateSettings(settings: UserSettingsEntity) {
         viewModelScope.launch {
             repository.updateSettings(settings)

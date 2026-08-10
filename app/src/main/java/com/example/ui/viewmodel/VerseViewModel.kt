@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.entity.VerseEntity
 import com.example.data.repository.VerseRepository
 import com.example.service.TtsManager
+import com.example.service.ElevenLabsTtsManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -97,6 +98,8 @@ class VerseViewModel(
         }
     }
 
+    private var elevenLabsTts: ElevenLabsTtsManager? = null
+
     fun isFavorite(verseId: Long) = repository.isFavorite(verseId)
 
     fun previewVerseSpeech(
@@ -114,10 +117,6 @@ class VerseViewModel(
             val finalPitch = pitch ?: settings?.defaultPitch ?: 1.0f
             val finalVoiceName = voiceName ?: settings?.ttsVoiceName ?: ""
 
-            if (previewTts == null) {
-                previewTts = TtsManager(context.applicationContext)
-            }
-            previewTts?.configure(speechRate = finalRate, pitch = finalPitch, voiceName = finalVoiceName)
             val isTagalogSpeech = finalVoiceName.contains("filipino") || finalVoiceName.contains("tagalog") || finalVoiceName.contains("pedro") ||
                     verse.translation.equals("FSV", ignoreCase = true) || verse.translation.equals("TAG", ignoreCase = true) ||
                     verse.translation.equals("ADB", ignoreCase = true) || verse.translation.equals("SND", ignoreCase = true)
@@ -130,6 +129,33 @@ class VerseViewModel(
                 "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}"
             }
             val textToSpeak = "$referencePart. ${verse.text}$prayerPart"
+
+            stopSpeechPreview()
+
+            if (settings?.useElevenLabs == true && !settings.elevenLabsApiKey.isNullOrBlank()) {
+                if (elevenLabsTts == null) {
+                    elevenLabsTts = ElevenLabsTtsManager(context.applicationContext)
+                }
+                val success = elevenLabsTts?.synthesizeAndPlay(
+                    text = textToSpeak,
+                    apiKey = settings.elevenLabsApiKey,
+                    voiceId = settings.elevenLabsVoiceId,
+                    onError = {
+                        // Fallback to local TTS if ElevenLabs error
+                        if (previewTts == null) {
+                            previewTts = TtsManager(context.applicationContext)
+                        }
+                        previewTts?.configure(speechRate = finalRate, pitch = finalPitch, voiceName = finalVoiceName)
+                        previewTts?.speak(textToSpeak, playBell = false)
+                    }
+                )
+                if (success == true) return@launch
+            }
+
+            if (previewTts == null) {
+                previewTts = TtsManager(context.applicationContext)
+            }
+            previewTts?.configure(speechRate = finalRate, pitch = finalPitch, voiceName = finalVoiceName)
             previewTts?.speak(textToSpeak, playBell = false)
         }
     }
@@ -143,6 +169,7 @@ class VerseViewModel(
 
     fun stopSpeechPreview() {
         previewTts?.stop()
+        elevenLabsTts?.stop()
     }
 
     fun addNewVerse(verse: VerseEntity) {

@@ -15,5 +15,8 @@ data class UserSettingsEntity(
     val defaultTranslation: String = "KJV",
     val ttsLanguage: String = "en-US",
     val ttsVoiceName: String = "",
-    val alarmVolume: Int = 80
+    val alarmVolume: Int = 80,
+    val useElevenLabs: Boolean = false,
+    val elevenLabsApiKey: String = "",
+    val elevenLabsVoiceId: String = "JBFqnCBsd6RMkjVDRZzb" // Default George (Deep Male / Pastor)
 )

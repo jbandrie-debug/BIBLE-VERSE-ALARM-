@@ -70,6 +70,16 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -82,6 +92,11 @@ fun SettingsScreen(
     var rate by remember(settings) { mutableFloatStateOf(settings?.defaultSpeechRate ?: 1.0f) }
     var pitch by remember(settings) { mutableFloatStateOf(settings?.defaultPitch ?: 1.0f) }
     var selectedVoiceName by remember(settings) { mutableStateOf(settings?.ttsVoiceName ?: "") }
+
+    var useElevenLabs by remember(settings) { mutableStateOf(settings?.useElevenLabs ?: false) }
+    var elevenLabsApiKey by remember(settings) { mutableStateOf(settings?.elevenLabsApiKey ?: "") }
+    var elevenLabsVoiceId by remember(settings) { mutableStateOf(settings?.elevenLabsVoiceId ?: "JBFqnCBsd6RMkjVDRZzb") }
+    var showApiKey by remember { mutableStateOf(false) }
 
     val voiceProfiles = remember(context) { verseViewModel.getAvailableVoiceProfiles(context) }
     var expandedVoiceMenu by remember { mutableStateOf(false) }
@@ -403,6 +418,156 @@ fun SettingsScreen(
                         valueRange = 0.5f..2.0f,
                         steps = 15
                     )
+                }
+            }
+
+            // ElevenLabs AI Voice Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (useElevenLabs) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "ElevenLabs AI Voice Integration",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                                Text(
+                                    text = "https://elevenlabs.io (Studio Quality Voices)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = useElevenLabs,
+                            onCheckedChange = {
+                                useElevenLabs = it
+                                settingsViewModel.updateElevenLabsSettings(useElevenLabs, elevenLabsApiKey, elevenLabsVoiceId)
+                            }
+                        )
+                    }
+
+                    if (useElevenLabs) {
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // API Key Input
+                        OutlinedTextField(
+                            value = elevenLabsApiKey,
+                            onValueChange = {
+                                elevenLabsApiKey = it
+                                settingsViewModel.updateElevenLabsSettings(useElevenLabs, elevenLabsApiKey, elevenLabsVoiceId)
+                            },
+                            label = { Text("ElevenLabs API Key (xi-api-key)") },
+                            placeholder = { Text("Paste your API key from elevenlabs.io") },
+                            leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
+                            trailingIcon = {
+                                IconButton(onClick = { showApiKey = !showApiKey }) {
+                                    Icon(
+                                        imageVector = if (showApiKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = "Toggle Visibility"
+                                    )
+                                }
+                            },
+                            visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Voice ID Selection / Presets
+                        Text(
+                            text = "Voice Presets & Character IDs",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            val elevenLabsVoices = listOf(
+                                "JBFqnCBsd6RMkjVDRZzb" to "🎙️ George (Pastor Baritone)",
+                                "pNInz6obpgDQGcFmaJgB" to "👨 Adam (Warm Male)",
+                                "IKne3meq5aSn9XLyUdCD" to "💬 Charlie (Meditative Male)",
+                                "EXAVITQu4vr4xnSDxMaL" to "👩 Sarah (Soft Female)"
+                            )
+
+                            elevenLabsVoices.forEach { (vid, vName) ->
+                                val isSelected = elevenLabsVoiceId == vid
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        elevenLabsVoiceId = vid
+                                        settingsViewModel.updateElevenLabsSettings(useElevenLabs, elevenLabsApiKey, elevenLabsVoiceId)
+                                    },
+                                    label = { Text(vName, style = MaterialTheme.typography.labelMedium) }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Custom Voice ID Input
+                        OutlinedTextField(
+                            value = elevenLabsVoiceId,
+                            onValueChange = {
+                                elevenLabsVoiceId = it
+                                settingsViewModel.updateElevenLabsSettings(useElevenLabs, elevenLabsApiKey, elevenLabsVoiceId)
+                            },
+                            label = { Text("Custom Voice ID (e.g. Kuya Pedro / Cloned Voice ID)") },
+                            placeholder = { Text("Enter voice ID from ElevenLabs Voice Library") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Test ElevenLabs Speech Button
+                        Button(
+                            onClick = {
+                                if (elevenLabsApiKey.isBlank()) {
+                                    Toast.makeText(context, "Palihug ibutang una ang imong ElevenLabs API Key!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    val dummyVerse = VerseEntity(
+                                        book = "Filipos", chapter = 4, verseNumber = 13,
+                                        text = "Kaya kong gawin ang lahat ng bagay sa pamamagitan Niya na nagpapalakas sa akin.",
+                                        translation = "FSV",
+                                        prayer = "Panginoong Hesus, salamat sa Iyong lakas at gabay ngayong araw. Amen."
+                                    )
+                                    verseViewModel.previewVerseSpeech(context, dummyVerse)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Test ElevenLabs AI Voice Audio")
+                        }
+                    }
                 }
             }
 

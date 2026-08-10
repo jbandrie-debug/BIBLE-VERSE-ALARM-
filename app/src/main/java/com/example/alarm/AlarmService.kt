@@ -38,6 +38,7 @@ class AlarmService : Service() {
     private var ringtone: Ringtone? = null
     private var vibrator: Vibrator? = null
     private var ttsManager: TtsManager? = null
+    private var elevenLabsTtsManager: com.example.service.ElevenLabsTtsManager? = null
     private var currentAlarm: AlarmEntity? = null
     private var currentVerse: VerseEntity? = null
 
@@ -278,17 +279,51 @@ class AlarmService : Service() {
 
                 val verseTextToSpeak = "$greeting $refPart. ${verse.text}$prayerPart"
 
-                when (alarm.soundMode) {
-                    SoundMode.VERSE_THEN_ALARM -> {
+                suspend fun performSpeak(onDoneCallback: (() -> Unit)?) {
+                    notifyVerseSpeaking(verse)
+                    if (settings?.useElevenLabs == true && !settings.elevenLabsApiKey.isNullOrBlank()) {
+                        if (elevenLabsTtsManager == null) {
+                            elevenLabsTtsManager = com.example.service.ElevenLabsTtsManager(applicationContext)
+                        }
+                        val success = elevenLabsTtsManager?.synthesizeAndPlay(
+                            text = verseTextToSpeak,
+                            apiKey = settings.elevenLabsApiKey,
+                            voiceId = settings.elevenLabsVoiceId,
+                            onCompletion = {
+                                onDoneCallback?.invoke()
+                            },
+                            onError = {
+                                Log.w("AlarmService", "ElevenLabs failed, falling back to local TTS")
+                                ttsManager?.speak(
+                                    text = verseTextToSpeak,
+                                    onStart = { notifyVerseSpeaking(verse) },
+                                    onDone = { onDoneCallback?.invoke() }
+                                )
+                            }
+                        )
+                        if (success == false) {
+                            ttsManager?.speak(
+                                text = verseTextToSpeak,
+                                onStart = { notifyVerseSpeaking(verse) },
+                                onDone = { onDoneCallback?.invoke() }
+                            )
+                        }
+                    } else {
                         ttsManager?.speak(
                             text = verseTextToSpeak,
                             onStart = { notifyVerseSpeaking(verse) },
-                            onDone = {
-                                serviceScope.launch(Dispatchers.Main) {
-                                    startRingtone(alarm)
-                                }
-                            }
+                            onDone = { onDoneCallback?.invoke() }
                         )
+                    }
+                }
+
+                when (alarm.soundMode) {
+                    SoundMode.VERSE_THEN_ALARM -> {
+                        performSpeak {
+                            serviceScope.launch(Dispatchers.Main) {
+                                startRingtone(alarm)
+                            }
+                        }
                     }
                     SoundMode.ALARM_THEN_VERSE -> {
                         startRingtone(alarm)
@@ -296,18 +331,12 @@ class AlarmService : Service() {
                             delay(10000) // Ring for 10 seconds first
                             withContext(Dispatchers.Main) {
                                 stopRingtone()
-                                ttsManager?.speak(
-                                    text = verseTextToSpeak,
-                                    onStart = { notifyVerseSpeaking(verse) }
-                                )
+                                performSpeak(null)
                             }
                         }
                     }
                     SoundMode.VERSE_ONLY -> {
-                        ttsManager?.speak(
-                            text = verseTextToSpeak,
-                            onStart = { notifyVerseSpeaking(verse) }
-                        )
+                        performSpeak(null)
                     }
                     SoundMode.ALARM_ONLY -> {
                         startRingtone(alarm)
@@ -399,6 +428,7 @@ class AlarmService : Service() {
 
     private fun snoozeAlarm(alarmId: Long) {
         ttsManager?.stop()
+        elevenLabsTtsManager?.stop()
         stopRingtone()
         stopVibration()
 
@@ -424,8 +454,8 @@ class AlarmService : Service() {
     }
 
     override fun onDestroy() {
-
         ttsManager?.shutdown()
+        elevenLabsTtsManager?.stop()
         stopRingtone()
         stopVibration()
         super.onDestroy()
