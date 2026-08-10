@@ -112,9 +112,13 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         var effectiveRate = speechRate
 
         when (voiceName) {
+            "preset-filipino-pastor" -> {
+                effectivePitch = 0.70f // Deep, solemn Tagalog Pastor tone
+                effectiveRate = 0.82f  // Reverent, calm preaching/reading speed
+            }
             "preset-old-male" -> {
-                effectivePitch = 0.78f // Deep, warm elder male / pastor tone
-                effectiveRate = 0.88f  // Calm, reverent reading speed
+                effectivePitch = 0.72f // Deep, warm elder male / pastor tone
+                effectiveRate = 0.84f  // Calm, reverent reading speed
             }
             "preset-soft-female" -> {
                 effectivePitch = 1.08f // Soft, warm female tone
@@ -125,8 +129,8 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
                 effectiveRate = 0.90f  // Smooth inspirational reading
             }
             "preset-tagalog-male" -> {
-                effectivePitch = 0.82f // Deep Tagalog fatherly voice
-                effectiveRate = 0.88f  // Reverent Tagalog reading
+                effectivePitch = 0.76f // Deep Tagalog fatherly voice
+                effectiveRate = 0.86f  // Reverent Tagalog reading
             }
             "preset-tagalog-female" -> {
                 effectivePitch = 1.06f // Soft Tagalog female voice
@@ -157,6 +161,7 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
             if (voiceName.isNotBlank()) {
                 selectedVoice = voices.find { it.name == voiceName }
                     ?: when (voiceName) {
+                        "preset-filipino-pastor" -> findBestVoiceByGenderAndLocale(voices, Locale("fil", "PH"), preferFemale = false)
                         "preset-old-male" -> findBestVoiceByGenderAndLocale(voices, language, preferFemale = false)
                         "preset-soft-female" -> findBestVoiceByGenderAndLocale(voices, language, preferFemale = true)
                         "preset-soft-warm" -> findBestNaturalVoice(voices, language)
@@ -186,6 +191,35 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         }
     }
 
+    private fun isExplicitMaleVoice(voice: android.speech.tts.Voice): Boolean {
+        val name = voice.name.lowercase()
+        if (name.contains("female") || name.contains("woman") || name.contains("-f-") || name.contains("-f_") || name.contains("-sfg") || name.contains("-sfe")) {
+            return false
+        }
+        if (name.contains("male") || name.contains("man") || name.contains("-m-") || name.contains("-m_") || name.contains("deep") || name.contains("-iom") || name.contains("-iog")) {
+            return true
+        }
+        // Google TTS pattern: e.g. fil-ph-x-mab, fil-ph-x-m, en-us-x-sfm, etc.
+        if (name.contains("-x-m") || Regex(".*-[a-z]{2,3}-x-m.*").matches(name)) {
+            return true
+        }
+        return false
+    }
+
+    private fun isExplicitFemaleVoice(voice: android.speech.tts.Voice): Boolean {
+        val name = voice.name.lowercase()
+        if (name.contains("male") || name.contains("man") || name.contains("-m-") || name.contains("-m_") || name.contains("-iom") || name.contains("-iog")) {
+            return false
+        }
+        if (name.contains("female") || name.contains("woman") || name.contains("-f-") || name.contains("-f_") || name.contains("soft") || name.contains("-sfg") || name.contains("-sfe")) {
+            return true
+        }
+        if (name.contains("-x-f") || Regex(".*-[a-z]{2,3}-x-f.*").matches(name)) {
+            return true
+        }
+        return false
+    }
+
     private fun findBestVoiceByGenderAndLocale(
         voices: Set<android.speech.tts.Voice>,
         targetLocale: Locale,
@@ -195,7 +229,8 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
                 targetLocale.language.equals("tl", ignoreCase = true) ||
                 targetLocale.toLanguageTag().contains("fil", ignoreCase = true)
 
-        val matchingVoices = voices.filter { voice ->
+        // 1. Filter voices for target locale
+        val localeMatchingVoices = voices.filter { voice ->
             if (voice.locale == null) return@filter false
             val lang = voice.locale.language.lowercase()
             val name = voice.name.lowercase()
@@ -207,27 +242,40 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
             }
         }
 
-        val candidates = if (matchingVoices.isNotEmpty()) matchingVoices else voices.toList()
+        // 2. Filter for gender strictly if possible
+        var genderMatchingInLocale = localeMatchingVoices.filter { voice ->
+            if (preferFemale) isExplicitFemaleVoice(voice) else isExplicitMaleVoice(voice)
+        }
 
-        return candidates.maxByOrNull { voice ->
-            var score = calculateVoiceQualityScore(voice, targetLocale)
-            val name = voice.name.lowercase()
+        if (genderMatchingInLocale.isNotEmpty()) {
+            return genderMatchingInLocale.maxByOrNull { calculateVoiceQualityScore(it, targetLocale) }
+        }
 
-            val isFemaleVoice = name.contains("female") || name.contains("woman") || name.contains("f_") ||
-                    name.contains("-f-") || name.contains("soft") || name.contains("-sfg") || name.contains("-sfe")
-            val isMaleVoice = name.contains("male") || name.contains("man") || name.contains("m_") ||
-                    name.contains("-m-") || name.contains("deep") || name.contains("-iom") || name.contains("-iog")
+        // 3. If no voice with explicit gender in locale, check ALL system voices for requested gender
+        val globalGenderMatching = voices.filter { voice ->
+            if (preferFemale) isExplicitFemaleVoice(voice) else isExplicitMaleVoice(voice)
+        }
 
-            if (preferFemale) {
-                if (isFemaleVoice) score += 500
-                if (isMaleVoice) score -= 300
+        if (globalGenderMatching.isNotEmpty()) {
+            return globalGenderMatching.maxByOrNull { calculateVoiceQualityScore(it, targetLocale) }
+        }
+
+        // 4. Fallback to locale matching if gender isn't explicitly marked
+        if (localeMatchingVoices.isNotEmpty()) {
+            // For male preference, exclude explicit female voices if possible
+            val nonOppositeVoices = if (!preferFemale) {
+                localeMatchingVoices.filter { !isExplicitFemaleVoice(it) }
             } else {
-                if (isMaleVoice) score += 500
-                if (isFemaleVoice) score -= 300
+                localeMatchingVoices.filter { !isExplicitMaleVoice(it) }
             }
 
-            score
+            if (nonOppositeVoices.isNotEmpty()) {
+                return nonOppositeVoices.maxByOrNull { calculateVoiceQualityScore(it, targetLocale) }
+            }
+            return localeMatchingVoices.maxByOrNull { calculateVoiceQualityScore(it, targetLocale) }
         }
+
+        return voices.maxByOrNull { calculateVoiceQualityScore(it, targetLocale) }
     }
 
     private fun findBestNaturalVoice(voices: Set<android.speech.tts.Voice>, targetLocale: Locale): android.speech.tts.Voice? {
@@ -258,9 +306,23 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         val result = mutableListOf<VoiceProfile>()
         result.add(
             VoiceProfile(
-                id = "preset-soft-warm",
-                displayName = "🕊️ Soft & Warm Natural Voice (Inspirational) ✨",
-                locale = language.toLanguageTag()
+                id = "preset-filipino-pastor",
+                displayName = "⛪ Tagalog / Filipino Pastor Voice (Deep & Reverent) ✨",
+                locale = "fil-PH"
+            )
+        )
+        result.add(
+            VoiceProfile(
+                id = "preset-tagalog-male",
+                displayName = "🇵🇭 Tagalog / Filipino Fatherly Male Voice ✨",
+                locale = "fil-PH"
+            )
+        )
+        result.add(
+            VoiceProfile(
+                id = "preset-tagalog-female",
+                displayName = "🇵🇭 Tagalog / Filipino Soft Female Voice ✨",
+                locale = "fil-PH"
             )
         )
         result.add(
@@ -279,16 +341,9 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         )
         result.add(
             VoiceProfile(
-                id = "preset-tagalog-female",
-                displayName = "🇵🇭 Tagalog / Filipino Soft Female Voice ✨",
-                locale = "fil-PH"
-            )
-        )
-        result.add(
-            VoiceProfile(
-                id = "preset-tagalog-male",
-                displayName = "🇵🇭 Tagalog / Filipino Fatherly Male Voice ✨",
-                locale = "fil-PH"
+                id = "preset-soft-warm",
+                displayName = "🕊️ Soft & Warm Natural Voice (Inspirational) ✨",
+                locale = language.toLanguageTag()
             )
         )
         result.add(
@@ -390,8 +445,8 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
     private fun formatTextForNaturalSpeech(rawText: String): String {
         if (rawText.isBlank()) return rawText
         var text = rawText
-            .replace("\n", ". ")
-            .replace("  ", " ")
+            .replace("\r\n", "\n")
+            .replace("\r", "\n")
 
         // Detect if Tagalog / Filipino content
         val isTagalogText = text.contains("Juan", ignoreCase = true) ||
@@ -403,17 +458,35 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
                 text.contains("Panalangin", ignoreCase = true) ||
                 text.contains("Salamat", ignoreCase = true) ||
                 text.contains("Mga", ignoreCase = true) ||
+                text.contains("ang", ignoreCase = true) ||
+                text.contains("ng", ignoreCase = true) ||
+                text.contains("sa", ignoreCase = true) ||
                 language.language.equals("fil", ignoreCase = true) ||
                 language.language.equals("tl", ignoreCase = true)
 
         if (isTagalogText) {
-            // Convert chapter:verse formatting naturally into Tagalog speech phrasing
+            // Convert chapter:verse ranges naturally (e.g. 3:16-18 -> kapitulo 3, bersikulo 16 hanggang 18)
+            text = text.replace(Regex("(\\d+):(\\d+)-(\\d+)"), "kapitulo $1, bersikulo $2 hanggang $3")
+            // Convert chapter:verse formatting (e.g. 3:16 -> kapitulo 3, bersikulo 16)
             text = text.replace(Regex("(\\d+):(\\d+)"), "kapitulo $1, bersikulo $2")
+            // Enhance Tagalog Bible Book pauses (e.g. "Juan 3" -> "Juan, kapitulo 3")
+            text = text.replace(Regex("(?i)\\b(Juan|Mateo|Marcos|Lucas|Gawa|Roma|Corinto|Galacia|Efeso|Filipos|Colosas|Tesalonica|Timoteo|Tito|Filemon|Hebreo|Santiago|Pedro|Judas|Pahayag|Genesis|Exodo|Levitico|Numeros|Deuteronomio|Josue|Hukom|Rut|Samuel|Hari|Cronica|Esdras|Nehemias|Ester|Job|Awit|Kawikaan|Eclesiastes|Isaias|Jeremias|Lamentasyon|Ezequiel|Daniel|Oseas|Joel|Amos|Abdias|Jonas|Miqueas|Nahum|Habacuc|Sofonias|Hageo|Zacarias|Malaquias)\\s+(\\d+)"), "$1, $2")
         } else {
+            text = text.replace(Regex("(\\d+):(\\d+)-(\\d+)"), "chapter $1, verses $2 to $3")
             text = text.replace(Regex("(\\d+):(\\d+)"), "chapter $1, verse $2")
         }
 
-        return text.trim()
+        // Add soft natural breathing pauses for smooth human cadence
+        text = text
+            .replace("\n\n", ". ... ")
+            .replace("\n", ". ")
+            .replace("—", ", ")
+            .replace(" - ", ", ")
+            .replace(";", ", ")
+            .replace("  ", " ")
+            .trim()
+
+        return text
     }
 
     fun speak(

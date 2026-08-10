@@ -227,11 +227,12 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         val presets = listOf(
-                            Triple("preset-old-male", "👴 Old Male Pastor", 0.78f),
-                            Triple("preset-soft-female", "👩 Soft Female", 1.08f),
-                            Triple("preset-soft-warm", "🕊️ Soft & Warm", 0.95f),
+                            Triple("preset-filipino-pastor", "⛪ Filipino Pastor", 0.70f),
+                            Triple("preset-tagalog-male", "🇵🇭 Tagalog Male", 0.76f),
                             Triple("preset-tagalog-female", "🇵🇭 Tagalog Female", 1.06f),
-                            Triple("preset-tagalog-male", "🇵🇭 Tagalog Male", 0.82f)
+                            Triple("preset-old-male", "👴 Elder Pastor", 0.72f),
+                            Triple("preset-soft-female", "👩 Soft Female", 1.08f),
+                            Triple("preset-soft-warm", "🕊️ Soft & Warm", 0.95f)
                         )
 
                         presets.forEach { (presetId, label, presetPitch) ->
