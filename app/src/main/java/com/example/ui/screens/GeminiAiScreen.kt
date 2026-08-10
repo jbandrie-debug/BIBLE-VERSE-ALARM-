@@ -1,9 +1,5 @@
 package com.example.ui.screens
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,8 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Search
@@ -183,24 +177,15 @@ fun GeminiAiScreen(
     }
 }
 
-// 1. Voice Conversation Companion (gemini-3.1-flash-live-preview)
+// 1. AI Spiritual Companion Tab (gemini-3.5-flash)
 @Composable
 fun VoiceCompanionTab(viewModel: GeminiViewModel) {
     val context = LocalContext.current
     val voiceMessages by viewModel.voiceMessages.collectAsState()
-    val isListening by viewModel.isListening.collectAsState()
     val isSpeaking by viewModel.isSpeaking.collectAsState()
     val statusText by viewModel.voiceStatusText.collectAsState()
 
     var manualText by remember { mutableStateOf("") }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            viewModel.startListening()
-        }
-    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Card(
@@ -220,7 +205,7 @@ fun VoiceCompanionTab(viewModel: GeminiViewModel) {
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text("Voice Conversation Companion", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text("AI Spiritual Companion", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Text("Powered by gemini-3.5-flash", fontSize = 11.sp, color = Color.Gray)
                 }
             }
@@ -244,7 +229,7 @@ fun VoiceCompanionTab(viewModel: GeminiViewModel) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "Tap the mic button below to talk with Gemini, or type your question for voice guidance.",
+                            "I-type ang imong pangutana o mensahe para makig-storya kang Gemini AI sa Cebuano o Tagalog.",
                             textAlign = TextAlign.Center,
                             color = Color.Gray,
                             fontSize = 14.sp
@@ -296,7 +281,7 @@ fun VoiceCompanionTab(viewModel: GeminiViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Voice Controls & Mic Button
+        // Input Controls
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)),
@@ -317,7 +302,7 @@ fun VoiceCompanionTab(viewModel: GeminiViewModel) {
                     OutlinedTextField(
                         value = manualText,
                         onValueChange = { manualText = it },
-                        placeholder = { Text("Ask Gemini anything...") },
+                        placeholder = { Text("Pangutana o mensahe kang Gemini...") },
                         modifier = Modifier
                             .weight(1f)
                             .testTag("voice_text_input"),
@@ -329,51 +314,22 @@ fun VoiceCompanionTab(viewModel: GeminiViewModel) {
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    if (manualText.isNotBlank()) {
-                        IconButton(
-                            onClick = {
+                    IconButton(
+                        onClick = {
+                            if (manualText.isNotBlank()) {
                                 viewModel.sendVoicePrompt(manualText)
                                 manualText = ""
-                            },
-                            modifier = Modifier
-                                .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                .testTag("send_voice_text_button")
-                        ) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = Color.White)
-                        }
-                    } else {
-                        // Mic Button
-                        IconButton(
-                            onClick = {
-                                if (isListening) {
-                                    viewModel.stopListening()
-                                } else {
-                                    val hasPermission = ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.RECORD_AUDIO
-                                    ) == PackageManager.PERMISSION_GRANTED
-
-                                    if (hasPermission) {
-                                        viewModel.startListening()
-                                    } else {
-                                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(
-                                    if (isListening) Color.Red else MaterialTheme.colorScheme.primary,
-                                    CircleShape
-                                )
-                                .testTag("mic_toggle_button")
-                        ) {
-                            Icon(
-                                imageVector = if (isListening) Icons.Default.MicOff else Icons.Default.Mic,
-                                contentDescription = "Mic",
-                                tint = Color.White
+                            }
+                        },
+                        enabled = manualText.isNotBlank(),
+                        modifier = Modifier
+                            .background(
+                                if (manualText.isNotBlank()) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.3f),
+                                CircleShape
                             )
-                        }
+                            .testTag("send_voice_text_button")
+                    ) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = Color.White)
                     }
 
                     if (isSpeaking) {

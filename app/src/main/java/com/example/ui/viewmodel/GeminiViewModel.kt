@@ -1,11 +1,6 @@
 package com.example.ui.viewmodel
 
 import android.app.Application
-import android.content.Intent
-import android.os.Bundle
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -54,26 +49,21 @@ class GeminiViewModel(application: Application) : AndroidViewModel(application),
     private val _groundedState = MutableStateFlow<UiState<GroundedDevotionalResult>>(UiState.Idle)
     val groundedState: StateFlow<UiState<GroundedDevotionalResult>> = _groundedState.asStateFlow()
 
-    // Live Voice Companion State (gemini-3.5-flash)
+    // Live Voice/Text Companion State (gemini-3.5-flash)
     private val _voiceMessages = MutableStateFlow<List<VoiceMessage>>(emptyList())
     val voiceMessages: StateFlow<List<VoiceMessage>> = _voiceMessages.asStateFlow()
-
-    private val _isListening = MutableStateFlow(false)
-    val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
     private val _isSpeaking = MutableStateFlow(false)
     val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
 
-    private val _voiceStatusText = MutableStateFlow("Pindota ang mic para makig-storya kang Gemini sa Cebuano")
+    private val _voiceStatusText = MutableStateFlow("Pindota ang Send para makig-storya kang Gemini AI")
     val voiceStatusText: StateFlow<String> = _voiceStatusText.asStateFlow()
 
-    private var speechRecognizer: SpeechRecognizer? = null
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
 
     init {
         tts = TextToSpeech(application, this)
-        initSpeechRecognizer()
     }
 
     override fun onInit(status: Int) {
@@ -85,66 +75,8 @@ class GeminiViewModel(application: Application) : AndroidViewModel(application),
         }
     }
 
-    private fun initSpeechRecognizer() {
-        if (SpeechRecognizer.isRecognitionAvailable(getApplication())) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplication()).apply {
-                setRecognitionListener(object : RecognitionListener {
-                    override fun onReadyForSpeech(params: Bundle?) {
-                        _isListening.value = true
-                        _voiceStatusText.value = "Listening to your voice..."
-                    }
-
-                    override fun onBeginningOfSpeech() {}
-                    override fun onRmsChanged(rmsdB: Float) {}
-                    override fun onBufferReceived(buffer: ByteArray?) {}
-                    override fun onEndOfSpeech() {
-                        _isListening.value = false
-                        _voiceStatusText.value = "Processing with Gemini..."
-                    }
-
-                    override fun onError(error: Int) {
-                        _isListening.value = false
-                        _voiceStatusText.value = "Speech recognition error ($error). Tap mic to retry."
-                    }
-
-                    override fun onResults(results: Bundle?) {
-                        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                        val text = matches?.firstOrNull() ?: ""
-                        if (text.isNotEmpty()) {
-                            sendVoicePrompt(text)
-                        } else {
-                            _voiceStatusText.value = "Could not hear clearly. Try again."
-                        }
-                    }
-
-                    override fun onPartialResults(partialResults: Bundle?) {}
-                    override fun onEvent(eventType: Int, params: Bundle?) {}
-                })
-            }
-        }
-    }
-
-    fun startListening() {
-        if (_isSpeaking.value) {
-            stopSpeaking()
-        }
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-        }
-        try {
-            speechRecognizer?.startListening(intent)
-        } catch (e: Exception) {
-            _voiceStatusText.value = "Recognizer unavailable: ${e.message}"
-        }
-    }
-
-    fun stopListening() {
-        speechRecognizer?.stopListening()
-        _isListening.value = false
-    }
-
     fun sendVoicePrompt(userText: String) {
+        if (userText.isBlank()) return
         val currentList = _voiceMessages.value.toMutableList()
         currentList.add(VoiceMessage("User", userText))
         _voiceMessages.value = currentList
@@ -226,7 +158,6 @@ class GeminiViewModel(application: Application) : AndroidViewModel(application),
 
     override fun onCleared() {
         super.onCleared()
-        speechRecognizer?.destroy()
         tts?.stop()
         tts?.shutdown()
     }

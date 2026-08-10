@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -210,6 +211,45 @@ fun SettingsScreen(
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
+
+                    // Voice Style & Tone Presets
+                    Text(
+                        text = "Voice Tone & Character Presets",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val presets = listOf(
+                            Triple("preset-old-male", "👴 Old Male Pastor", 0.78f),
+                            Triple("preset-soft-female", "👩 Soft Female", 1.08f),
+                            Triple("preset-soft-warm", "🕊️ Soft & Warm", 0.95f),
+                            Triple("preset-tagalog-female", "🇵🇭 Tagalog Female", 1.06f),
+                            Triple("preset-tagalog-male", "🇵🇭 Tagalog Male", 0.82f)
+                        )
+
+                        presets.forEach { (presetId, label, presetPitch) ->
+                            val isSelected = selectedVoiceName == presetId
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedVoiceName = presetId
+                                    pitch = presetPitch
+                                    rate = if (presetId.contains("old") || presetId.contains("male")) 0.88f else 0.92f
+                                    settingsViewModel.updateDefaultTts(rate, pitch, selectedVoiceName)
+                                },
+                                label = { Text(label, style = MaterialTheme.typography.labelMedium) }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Voice Profile Picker
                     Text(
