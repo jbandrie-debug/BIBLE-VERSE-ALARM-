@@ -42,6 +42,9 @@ import com.example.ui.viewmodel.GeminiViewModel
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.ui.viewmodel.VerseViewModel
 
+import com.example.ui.components.CreatorSupportDialog
+import androidx.compose.runtime.saveable.rememberSaveable
+
 @Composable
 fun MainNavGraph(
     alarmViewModel: AlarmViewModel,
@@ -54,6 +57,13 @@ fun MainNavGraph(
     val currentRoute = navBackStackEntry?.destination?.route
 
     var editingAlarm by remember { mutableStateOf<AlarmEntity?>(null) }
+    var showSupportDialog by rememberSaveable { mutableStateOf(true) }
+
+    if (showSupportDialog) {
+        CreatorSupportDialog(
+            onDismiss = { showSupportDialog = false }
+        )
+    }
 
     val bottomBarScreens = listOf(
         Screen.Alarms,
