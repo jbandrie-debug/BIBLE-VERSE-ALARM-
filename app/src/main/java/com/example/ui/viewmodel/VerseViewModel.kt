@@ -117,17 +117,8 @@ class VerseViewModel(
             val finalPitch = pitch ?: settings?.defaultPitch ?: 1.0f
             val finalVoiceName = voiceName ?: settings?.ttsVoiceName ?: ""
 
-            val isTagalogSpeech = finalVoiceName.contains("filipino") || finalVoiceName.contains("tagalog") || finalVoiceName.contains("pedro") ||
-                    verse.translation.equals("FSV", ignoreCase = true) || verse.translation.equals("TAG", ignoreCase = true) ||
-                    verse.translation.equals("ADB", ignoreCase = true) || verse.translation.equals("SND", ignoreCase = true)
-
-            val prayerLabel = if (isTagalogSpeech) ". Panalangin: " else ". Prayer: "
-            val prayerPart = if (verse.prayer.isNotBlank()) "$prayerLabel${verse.prayer}" else ""
-            val referencePart = if (isTagalogSpeech) {
-                "${verse.book}, kapitulo ${verse.chapter}, bersikulo ${verse.verseNumber}"
-            } else {
-                "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}"
-            }
+            val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
+            val referencePart = "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}"
             val textToSpeak = "$referencePart. ${verse.text}$prayerPart"
 
             stopSpeechPreview()

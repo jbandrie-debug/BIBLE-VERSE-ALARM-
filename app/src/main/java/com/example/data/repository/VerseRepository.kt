@@ -60,7 +60,7 @@ class VerseRepository(
         book = "Psalms", chapter = 118, verseNumber = 24,
         text = "This is the day which the LORD hath made; we will rejoice and be glad in it.",
         translation = "KJV", category = "Morning",
-        prayer = "Panginoong Diyos, salamat sa bagong araw na Ito na Iyong ipinagkaloob. Punuin Mo ang aming puso ng kagalakan, biyaya, at pag-asa ngayong araw. Amen."
+        prayer = "Lord God, thank You for this new day that You have made. Fill our hearts with joy, grace, and hope today. Amen."
     )
 
     fun isFavorite(verseId: Long): Flow<Boolean> = favoriteDao.isFavorite(verseId)

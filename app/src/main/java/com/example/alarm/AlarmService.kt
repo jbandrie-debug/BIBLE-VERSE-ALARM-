@@ -255,27 +255,9 @@ class AlarmService : Service() {
                     startVibration()
                 }
 
-                val isTagalogSpeech = voiceName.contains("filipino") || voiceName.contains("tagalog") || voiceName.contains("pedro") || voiceName == "preset-old-male" ||
-                        verse.translation.equals("FSV", ignoreCase = true) || verse.translation.equals("TAG", ignoreCase = true) ||
-                        verse.translation.equals("ADB", ignoreCase = true) || verse.translation.equals("SND", ignoreCase = true)
-
-                val greeting = if (isTagalogSpeech) {
-                    when {
-                        alarm.timeHour in 4..11 -> "Magandang umaga! Narito ang salita ng Diyos para sa iyo ngayong araw."
-                        alarm.timeHour in 12..17 -> "Magandang hapon! Narito ang salita ng Diyos para sa iyo ngayong araw."
-                        else -> "Magandang gabi! Narito ang salita ng Diyos para sa iyo."
-                    }
-                } else {
-                    "${DateTimeUtils.getTimeBasedGreeting(alarm.timeHour)}! Here is your Bible verse for today."
-                }
-
-                val prayerLabel = if (isTagalogSpeech) ". Panalangin: " else ". Prayer: "
-                val prayerPart = if (verse.prayer.isNotBlank()) "$prayerLabel${verse.prayer}" else ""
-                val refPart = if (isTagalogSpeech) {
-                    "${verse.book}, kapitulo ${verse.chapter}, bersikulo ${verse.verseNumber}"
-                } else {
-                    "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}"
-                }
+                val greeting = "${DateTimeUtils.getTimeBasedGreeting(alarm.timeHour)}! Here is your Bible verse for today."
+                val prayerPart = if (verse.prayer.isNotBlank()) ". Prayer: ${verse.prayer}" else ""
+                val refPart = "${verse.book}, chapter ${verse.chapter}, verse ${verse.verseNumber}"
 
                 val verseTextToSpeak = "$greeting $refPart. ${verse.text}$prayerPart"
 

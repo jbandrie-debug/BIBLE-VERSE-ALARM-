@@ -97,11 +97,7 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         this.speechRate = speechRate
         this.pitch = pitch
         this.voiceName = voiceName
-        this.language = when {
-            languageCode.contains("GB", ignoreCase = true) -> Locale.UK
-            languageCode.contains("fil", ignoreCase = true) || languageCode.contains("tl", ignoreCase = true) || languageCode.contains("tagalog", ignoreCase = true) -> Locale("fil", "PH")
-            else -> Locale.US
-        }
+        this.language = Locale.US
         if (isInitialized) {
             applyConfiguration()
         }
@@ -112,38 +108,25 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         var effectiveRate = speechRate
 
         when (voiceName) {
-            "preset-kuya-pedro" -> {
-                effectivePitch = 0.75f // Warm, calm, meditative Kuya Pedro male voice
-                effectiveRate = 0.85f  // Smooth, relaxing Tagalog meditation speed
-                this.language = Locale("fil", "PH")
+            "preset-old-male", "preset-old-man-pastor" -> {
+                effectivePitch = 0.65f // Deep, warm English Old Man Pastor tone
+                effectiveRate = 0.80f  // Solemn, wise elder reading speed
+                this.language = Locale.US
             }
-            "preset-filipino-pastor" -> {
-                effectivePitch = 0.72f // Solemn, reverent Tagalog Pastor baritone
-                effectiveRate = 0.82f  // Calm preaching cadence
-                this.language = Locale("fil", "PH")
-            }
-            "preset-tagalog-male" -> {
-                effectivePitch = 0.78f // Natural Tagalog fatherly male voice
-                effectiveRate = 0.88f  // Reverent Tagalog reading speed
-                this.language = Locale("fil", "PH")
-            }
-            "preset-tagalog-female" -> {
-                effectivePitch = 1.08f // Bright, soft Tagalog female voice
-                effectiveRate = 0.92f  // Gentle Tagalog reading speed
-                this.language = Locale("fil", "PH")
-            }
-            "preset-old-male" -> {
-                effectivePitch = 0.68f // Deep, warm elder pastor tone
-                effectiveRate = 0.80f  // Slow, solemn elder reading speed
-                this.language = Locale("fil", "PH")
+            "preset-pastor-baritone" -> {
+                effectivePitch = 0.72f // Solemn, reverent English Pastor baritone
+                effectiveRate = 0.85f  // Calm preaching cadence
+                this.language = Locale.US
             }
             "preset-soft-female" -> {
-                effectivePitch = 1.12f // Soft, warm female tone
-                effectiveRate = 0.92f  // Gentle devotional reading speed
+                effectivePitch = 1.10f // Soft, warm female tone
+                effectiveRate = 0.90f  // Gentle devotional reading speed
+                this.language = Locale.US
             }
             "preset-soft-warm" -> {
                 effectivePitch = 0.95f // Soft, balanced warm pitch
                 effectiveRate = 0.90f  // Smooth inspirational reading
+                this.language = Locale.US
             }
         }
 
@@ -162,7 +145,7 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
 
         // Set default language first
         try {
-            tts?.language = language
+            tts?.language = Locale.US
         } catch (e: Exception) {
             Log.w("TtsManager", "Error setting TTS language: ${e.message}")
         }
@@ -170,27 +153,21 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         val voices = tts?.voices
         if (!voices.isNullOrEmpty()) {
             var selectedVoice: android.speech.tts.Voice? = null
-            val isMaleRequested = voiceName == "preset-kuya-pedro" ||
-                    voiceName == "preset-filipino-pastor" ||
-                    voiceName == "preset-tagalog-male" ||
-                    voiceName == "preset-old-male"
+            val isMaleRequested = voiceName == "preset-pastor-baritone" ||
+                    voiceName == "preset-old-male" ||
+                    voiceName == "preset-old-man-pastor"
 
-            val isFemaleRequested = voiceName == "preset-tagalog-female" ||
-                    voiceName == "preset-soft-female"
+            val isFemaleRequested = voiceName == "preset-soft-female"
 
             if (voiceName.isNotBlank()) {
                 selectedVoice = voices.find { it.name == voiceName }
                     ?: when (voiceName) {
-                        "preset-kuya-pedro" -> findBestVoiceByGenderAndLocale(voices, Locale("fil", "PH"), preferFemale = false)
-                        "preset-filipino-pastor" -> findBestVoiceByGenderAndLocale(voices, Locale("fil", "PH"), preferFemale = false)
-                        "preset-old-male" -> findBestVoiceByGenderAndLocale(voices, language, preferFemale = false)
-                        "preset-soft-female" -> findBestVoiceByGenderAndLocale(voices, language, preferFemale = true)
-                        "preset-soft-warm" -> findBestNaturalVoice(voices, language)
-                        "preset-tagalog-male" -> findBestVoiceByGenderAndLocale(voices, Locale("fil", "PH"), preferFemale = false)
-                        "preset-tagalog-female" -> findBestVoiceByGenderAndLocale(voices, Locale("fil", "PH"), preferFemale = true)
+                        "preset-old-male", "preset-old-man-pastor" -> findBestVoiceByGenderAndLocale(voices, Locale.US, preferFemale = false)
+                        "preset-pastor-baritone" -> findBestVoiceByGenderAndLocale(voices, Locale.US, preferFemale = false)
+                        "preset-soft-female" -> findBestVoiceByGenderAndLocale(voices, Locale.US, preferFemale = true)
+                        "preset-soft-warm" -> findBestNaturalVoice(voices, Locale.US)
                         "en-us-standard" -> findBestNaturalVoice(voices, Locale.US)
                         "en-gb-standard" -> findBestNaturalVoice(voices, Locale.UK)
-                        "fil-ph-standard" -> findBestNaturalVoice(voices, Locale("fil", "PH")) ?: findBestNaturalVoice(voices, Locale("tl", "PH"))
                         else -> null
                     }
             }
@@ -341,58 +318,30 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
         val result = mutableListOf<VoiceProfile>()
         result.add(
             VoiceProfile(
-                id = "preset-kuya-pedro",
-                displayName = "🎙️ Kuya Pedro (Warm, Meditative Tagalog Voice) ✨",
-                locale = "fil-PH"
-            )
-        )
-        result.add(
-            VoiceProfile(
-                id = "preset-filipino-pastor",
-                displayName = "⛪ Tagalog / Filipino Pastor Voice (Deep & Reverent) ✨",
-                locale = "fil-PH"
-            )
-        )
-        result.add(
-            VoiceProfile(
-                id = "preset-tagalog-male",
-                displayName = "🇵🇭 Tagalog / Filipino Fatherly Male Voice ✨",
-                locale = "fil-PH"
-            )
-        )
-        result.add(
-            VoiceProfile(
-                id = "preset-tagalog-female",
-                displayName = "🇵🇭 Tagalog / Filipino Soft Female Voice ✨",
-                locale = "fil-PH"
-            )
-        )
-        result.add(
-            VoiceProfile(
                 id = "preset-old-male",
-                displayName = "👴 Deep Old Male / Elder Pastor (Warm & Resonant) ✨",
-                locale = language.toLanguageTag()
+                displayName = "👴 English Old Man Pastor (Deep & Wise Reverent Tone) ✨",
+                locale = "en-US"
+            )
+        )
+        result.add(
+            VoiceProfile(
+                id = "preset-pastor-baritone",
+                displayName = "⛪ English Pastor Baritone (Solemn Preaching Voice) ✨",
+                locale = "en-US"
             )
         )
         result.add(
             VoiceProfile(
                 id = "preset-soft-female",
                 displayName = "👩 Soft & Warm Female Devotional Voice ✨",
-                locale = language.toLanguageTag()
+                locale = "en-US"
             )
         )
         result.add(
             VoiceProfile(
                 id = "preset-soft-warm",
                 displayName = "🕊️ Soft & Warm Natural Voice (Inspirational) ✨",
-                locale = language.toLanguageTag()
-            )
-        )
-        result.add(
-            VoiceProfile(
-                id = "fil-ph-standard",
-                displayName = "🇵🇭 Tagalog / Filipino Realistic Natural Voice ✨",
-                locale = "fil-PH"
+                locale = "en-US"
             )
         )
         result.add(
